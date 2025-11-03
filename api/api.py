@@ -1,6 +1,6 @@
 from ninja import NinjaAPI
 
-from api.router import cgm_router
+from api.router import bolus_router, cgm_router
 
 api = NinjaAPI(
     title="Diafit Backend API",
@@ -10,3 +10,4 @@ api = NinjaAPI(
 )
 
 api.add_router("/cgm", cgm_router)
+api.add_router("/bolus", bolus_router)

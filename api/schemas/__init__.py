@@ -1,1 +1,2 @@
-from api.schemas.cgm_schema import CgmOutSchema  # noqa: F401
+from api.schemas.bolus_schema import BolusInSchema, BolusOutSchema  # noqa: F401
+from api.schemas.cgm_schema import CgmInSchema, CgmOutSchema  # noqa: F401
