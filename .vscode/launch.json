@@ -1,0 +1,42 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Run Django Server",
+            "consoleName": "Django",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}\\manage.py",
+            "args": [
+                "runserver"
+            ],
+            "django": true,
+            "justMyCode": true
+        },
+
+        // {
+        //     "name": "Run Q Cluster",
+        //     "consoleName": "Django Q Cluster",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "program": "${workspaceFolder}\\manage.py",
+        //     "args": [
+        //         "qcluster"
+        //     ],
+        //     "django": true,
+        //     "gevent": true
+        // }
+    ],
+
+    "compounds": [
+
+        {
+            "name": "Run All",
+            "configurations": [
+                "Run Django Server",
+                // "Run Q Cluster"
+            ]
+        }
+    ]
+}
