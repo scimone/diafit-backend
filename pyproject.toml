@@ -9,4 +9,5 @@ dependencies = [
     "django-ninja>=1.4.5",
     "gunicorn>=23.0.0",
     "psycopg2-binary>=2.9.11",
+    "python-dotenv>=1.2.1",
 ]

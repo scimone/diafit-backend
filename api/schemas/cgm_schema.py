@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
@@ -19,7 +20,7 @@ class DirectionEnum(str, Enum):
 
 class CgmInSchema(Schema):
     user_id: int
-    timestamp: int
+    timestamp: str
     value_mgdl: int
     five_minute_rate_mgdl: float
     direction: Optional[DirectionEnum] = DirectionEnum.NONE
@@ -31,7 +32,7 @@ class CgmInSchema(Schema):
 class CgmOutSchema(Schema):
     id: int
     user_id: int
-    timestamp: int
+    timestamp: datetime
     value_mgdl: int
     five_minute_rate_mgdl: float
     direction: DirectionEnum

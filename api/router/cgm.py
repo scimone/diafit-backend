@@ -35,3 +35,23 @@ def create_cgm(request, payload: CgmInSchema):
     cgm_entry = CgmEntity(**payload.dict())
     cgm_entry.save()
     return cgm_entry
+
+
+@router.post(
+    path="/bulk",
+    response={201: list[CgmOutSchema]},
+    tags=["CGM"],
+    summary="Bulk Create CGM Entries",
+    description="Insert multiple CGM entries efficiently in one request.",
+)
+def create_cgm_bulk(request, payload: list[CgmInSchema]):
+    """
+    Accepts a list of CGM readings and stores them efficiently using bulk_create.
+    """
+    # Convert payload list into model objects
+    cgm_objects = [CgmEntity(**item.dict()) for item in payload]
+
+    # Bulk insert all at once
+    created = CgmEntity.objects.bulk_create(cgm_objects)
+
+    return created
