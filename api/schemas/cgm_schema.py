@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from ninja import Schema
 
@@ -14,6 +15,17 @@ class DirectionEnum(str, Enum):
     DOUBLE_DOWN = "DoubleDown"
     NOT_COMPUTABLE = "NotComputable"
     RATE_OUT_OF_RANGE = "RateOutOfRange"
+
+
+class CgmInSchema(Schema):
+    user_id: int
+    timestamp: int
+    value_mgdl: int
+    five_minute_rate_mgdl: float
+    direction: Optional[DirectionEnum] = DirectionEnum.NONE
+    device: Optional[str] = "Unknown"
+    source: Optional[str] = "Unknown"
+    source_id: Optional[str] = None
 
 
 class CgmOutSchema(Schema):

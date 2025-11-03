@@ -1,7 +1,7 @@
 from ninja import Query, Router
 
-from api.schemas.cgm_schema import CgmOutSchema
-from diafit_backend.models import CgmEntity  # adjust path to your model
+from api.schemas.cgm_schema import CgmInSchema, CgmOutSchema
+from diafit_backend.models import CgmEntity
 
 router = Router(tags=["CGM"])
 
@@ -19,3 +19,19 @@ def list_cgm(request, count: int = Query(10, description="Number of entries to f
     """
     queryset = CgmEntity.objects.order_by("-timestamp")[:count]
     return list(queryset)
+
+
+@router.post(
+    path="/create",
+    response=CgmOutSchema,
+    tags=["CGM"],
+    summary="Create CGM Entry",
+    description="Create a new CGM entry.",
+)
+def create_cgm(request, payload: CgmInSchema):
+    """
+    Creates a new CGM entry.
+    """
+    cgm_entry = CgmEntity(**payload.dict())
+    cgm_entry.save()
+    return cgm_entry
