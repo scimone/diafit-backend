@@ -4,7 +4,7 @@ services:
   web:
     build: .
     container_name: diafit_backend
-    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
+    command: uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000
     restart: always
     volumes:
       - .:/app
