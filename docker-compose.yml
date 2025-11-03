@@ -1,25 +1,22 @@
-version: '3.9'
-
 services:
   web:
     build: .
     container_name: diafit_backend
     command: uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000
-    restart: always
     volumes:
       - .:/app
     ports:
       - "8010:8000"
     depends_on:
       - db
+    env_file:
+      - .env
 
   db:
     image: postgres:16
     container_name: diafit_postgres
-    environment:
-      POSTGRES_DB: diafit
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
