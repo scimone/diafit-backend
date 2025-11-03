@@ -20,7 +20,7 @@ class BolusEntity(models.Model):
     """
 
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
-    timestamp_utc = models.DateTimeField(db_index=True, unique=True)
+    timestamp_utc = models.DateTimeField()
     created_at_utc = models.DateTimeField()
     updated_at_utc = models.DateTimeField()
     value = models.FloatField()

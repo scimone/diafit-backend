@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 
 from ninja import Query, Router
@@ -36,8 +37,34 @@ def bulk_create_bolus(request, payloads: List[BolusInSchema]):
     path="/list",
     response=List[BolusOutSchema],
     summary="List Bolus Entries",
-    description="Retrieve latest bolus entries, limited by count.",
+    description="Retrieve latest bolus entries, optionally filtered by timestamp range, limited by count.",
 )
-def list_bolus(request, count: int = Query(10)):
-    queryset = BolusEntity.objects.order_by("-timestamp_utc")[:count]
+def list_bolus(
+    request,
+    count: int = Query(10, description="Maximum number of results to return"),
+    start: datetime | None = Query(
+        None, description="Filter from this timestamp (UTC, ISO8601)"
+    ),
+    end: datetime | None = Query(
+        None, description="Filter up to this timestamp (UTC, ISO8601)"
+    ),
+):
+    """
+    Example usage:
+    - /api/bolus/list?count=5
+    - /api/bolus/list?start=2025-11-03T00:00:00Z&end=2025-11-03T23:59:59Z
+    """
+    queryset = BolusEntity.objects.all()
+
+    # Apply timestamp range filters if provided
+    if start and end:
+        queryset = queryset.filter(timestamp_utc__range=(start, end))
+    elif start:
+        queryset = queryset.filter(timestamp_utc__gte=start)
+    elif end:
+        queryset = queryset.filter(timestamp_utc__lte=end)
+
+    # Order and limit results
+    queryset = queryset.order_by("-timestamp_utc")[:count]
+
     return list(queryset)
