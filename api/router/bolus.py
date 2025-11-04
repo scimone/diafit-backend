@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from ninja import Query, Router
 
@@ -48,6 +48,10 @@ def list_bolus(
     end: datetime | None = Query(
         None, description="Filter up to this timestamp (UTC, ISO8601)"
     ),
+    event_type: Optional[str] = Query(
+        None,
+        description="Filter by event type (e.g. 'Correction Bolus', 'Meal Bolus', etc.)",
+    ),
 ):
     """
     Example usage:
@@ -63,6 +67,10 @@ def list_bolus(
         queryset = queryset.filter(timestamp_utc__gte=start)
     elif end:
         queryset = queryset.filter(timestamp_utc__lte=end)
+
+    # Apply event type filter if provided
+    if event_type:
+        queryset = queryset.filter(event_type__iexact=event_type)
 
     # Order and limit results
     queryset = queryset.order_by("-timestamp_utc")[:count]
