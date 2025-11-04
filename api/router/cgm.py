@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from ninja import Query, Router
 
 from api.schemas.cgm_schema import CgmInSchema, CgmOutSchema
@@ -13,11 +15,30 @@ router = Router(tags=["CGM"])
     summary="List CGM Entries",
     description="Retrieve a list of CGM entries.",
 )
-def list_cgm(request, count: int = Query(10, description="Number of entries to fetch")):
+def list_cgm(
+    request,
+    count: int = Query(10, description="Maximum number of results to return"),
+    start: datetime | None = Query(
+        None, description="Filter from this timestamp (UTC, ISO8601)"
+    ),
+    end: datetime | None = Query(
+        None, description="Filter up to this timestamp (UTC, ISO8601)"
+    ),
+):
     """
     Returns the latest CGM entries, limited by 'count'.
     """
-    queryset = CgmEntity.objects.order_by("-timestamp")[:count]
+    queryset = CgmEntity.objects.all()
+
+    # Apply timestamp range filters if provided
+    if start and end:
+        queryset = queryset.filter(timestamp__range=(start, end))
+    elif start:
+        queryset = queryset.filter(timestamp__gte=start)
+    elif end:
+        queryset = queryset.filter(timestamp__lte=end)
+
+    queryset = queryset.order_by("-timestamp")[:count]
     return list(queryset)
 
 
