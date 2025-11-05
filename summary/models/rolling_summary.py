@@ -11,6 +11,7 @@ class RollingSummary(BaseSummary):
     start_date = models.DateField()
     end_date = models.DateField()
     period_days = models.IntegerField(help_text="Number of days in the rolling period")
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         unique_together = ("user", "end_date", "period_days")
