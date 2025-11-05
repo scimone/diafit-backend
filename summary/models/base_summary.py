@@ -14,17 +14,17 @@ class BaseSummary(models.Model):
     time_in_range = models.IntegerField()
     time_below_range = models.IntegerField()
     time_above_range = models.IntegerField()
-    cgm_coverage = models.IntegerField(
+    daily_cgm_coverage = models.IntegerField(
         help_text="Percent of the period covered by CGM readings (0–100)"
     )
 
     # Insulin & meals
-    total_bolus = models.FloatField()
-    total_meals = models.IntegerField()
-    total_carbs = models.IntegerField()
-    total_proteins = models.IntegerField()
-    total_fats = models.IntegerField()
-    total_calories = models.IntegerField()
+    daily_total_bolus = models.FloatField()
+    daily_total_meals = models.IntegerField()
+    daily_total_carbs = models.IntegerField()
+    daily_total_proteins = models.IntegerField()
+    daily_total_fats = models.IntegerField()
+    daily_total_calories = models.IntegerField()
 
     class Meta:
         abstract = True

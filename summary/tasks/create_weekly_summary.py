@@ -56,13 +56,13 @@ def create_weekly_summary(
             time_in_range=Avg("time_in_range"),
             time_below_range=Avg("time_below_range"),
             time_above_range=Avg("time_above_range"),
-            cgm_coverage=Avg("cgm_coverage"),
-            total_bolus=Avg("total_bolus"),
-            total_meals=Avg("total_meals"),
-            total_carbs=Avg("total_carbs"),
-            total_proteins=Avg("total_proteins"),
-            total_fats=Avg("total_fats"),
-            total_calories=Avg("total_calories"),
+            daily_cgm_coverage=Avg("daily_cgm_coverage"),
+            daily_total_bolus=Avg("daily_total_bolus"),  # Average per day
+            daily_total_meals=Avg("daily_total_meals"),  # Average per day
+            daily_total_carbs=Avg("daily_total_carbs"),  # Average per day
+            daily_total_proteins=Avg("daily_total_proteins"),  # Average per day
+            daily_total_fats=Avg("daily_total_fats"),  # Average per day
+            daily_total_calories=Avg("daily_total_calories"),  # Average per day
         )
 
         WeeklySummary.objects.update_or_create(
@@ -75,13 +75,13 @@ def create_weekly_summary(
                 "time_in_range": round(aggregated["time_in_range"] or 0),
                 "time_below_range": round(aggregated["time_below_range"] or 0),
                 "time_above_range": round(aggregated["time_above_range"] or 0),
-                "cgm_coverage": round(aggregated["cgm_coverage"] or 0),
-                "total_bolus": aggregated["total_bolus"] or 0,
-                "total_meals": aggregated["total_meals"] or 0,
-                "total_carbs": aggregated["total_carbs"] or 0,
-                "total_proteins": aggregated["total_proteins"] or 0,
-                "total_fats": aggregated["total_fats"] or 0,
-                "total_calories": aggregated["total_calories"] or 0,
+                "daily_cgm_coverage": round(aggregated["daily_cgm_coverage"] or 0),
+                "daily_total_bolus": aggregated["daily_total_bolus"] or 0,
+                "daily_total_meals": aggregated["daily_total_meals"] or 0,
+                "daily_total_carbs": aggregated["daily_total_carbs"] or 0,
+                "daily_total_proteins": aggregated["daily_total_proteins"] or 0,
+                "daily_total_fats": aggregated["daily_total_fats"] or 0,
+                "daily_total_calories": aggregated["daily_total_calories"] or 0,
             },
         )
 

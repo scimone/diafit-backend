@@ -13,13 +13,13 @@ class DailySummaryOutSchema(Schema):
     time_in_range: int
     time_below_range: int
     time_above_range: int
-    cgm_coverage: int
-    total_carbs: float
-    total_proteins: float
-    total_fats: float
-    total_calories: int
-    total_meals: float
-    total_bolus: float
+    daily_cgm_coverage: int
+    daily_total_carbs: float
+    daily_total_proteins: float
+    daily_total_fats: float
+    daily_total_calories: int
+    daily_total_meals: float
+    daily_total_bolus: float
 
 
 class WeeklySummaryOutSchema(Schema):
@@ -31,13 +31,13 @@ class WeeklySummaryOutSchema(Schema):
     time_in_range: int
     time_below_range: int
     time_above_range: int
-    cgm_coverage: int
-    total_carbs: float
-    total_proteins: float
-    total_fats: float
-    total_calories: int
-    total_meals: float
-    total_bolus: float
+    daily_cgm_coverage: int
+    daily_total_carbs: float
+    daily_total_proteins: float
+    daily_total_fats: float
+    daily_total_calories: int
+    daily_total_meals: float
+    daily_total_bolus: float
 
 
 class MonthlySummaryOutSchema(Schema):
@@ -49,13 +49,13 @@ class MonthlySummaryOutSchema(Schema):
     time_in_range: int
     time_below_range: int
     time_above_range: int
-    cgm_coverage: int
-    total_carbs: float
-    total_proteins: float
-    total_fats: float
-    total_calories: int
-    total_meals: float
-    total_bolus: float
+    daily_cgm_coverage: int
+    daily_total_carbs: float
+    daily_total_proteins: float
+    daily_total_fats: float
+    daily_total_calories: int
+    daily_total_meals: float
+    daily_total_bolus: float
 
 
 class QuarterlySummaryOutSchema(Schema):
@@ -67,13 +67,13 @@ class QuarterlySummaryOutSchema(Schema):
     time_in_range: int
     time_below_range: int
     time_above_range: int
-    cgm_coverage: int
-    total_carbs: float
-    total_proteins: float
-    total_fats: float
-    total_calories: int
-    total_meals: float
-    total_bolus: float
+    daily_cgm_coverage: int
+    daily_total_carbs: float
+    daily_total_proteins: float
+    daily_total_fats: float
+    daily_total_calories: int
+    daily_total_meals: float
+    daily_total_bolus: float
 
 
 class RollingSummaryOutSchema(Schema):
@@ -86,10 +86,10 @@ class RollingSummaryOutSchema(Schema):
     time_in_range: int
     time_below_range: int
     time_above_range: int
-    cgm_coverage: int
-    total_carbs: float
-    total_proteins: float
-    total_fats: float
-    total_calories: int
-    total_meals: float
-    total_bolus: float
+    daily_cgm_coverage: int
+    daily_total_carbs: float
+    daily_total_proteins: float
+    daily_total_fats: float
+    daily_total_calories: int
+    daily_total_meals: float
+    daily_total_bolus: float
