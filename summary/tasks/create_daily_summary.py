@@ -7,9 +7,9 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 from django.db.models import Avg, Count, StdDev, Sum
 from django.utils import timezone
-from summary.utils.compute_cgm_coverage import compute_cgm_coverage
 
 from summary.models import DailySummary
+from summary.util.compute_cgm_coverage import compute_cgm_coverage
 
 
 def create_daily_summary(
