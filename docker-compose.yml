@@ -2,6 +2,7 @@ services:
   web:
     build: .
     container_name: diafit_backend
+    restart: always
     command: uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
@@ -15,12 +16,23 @@ services:
   db:
     image: postgres:16
     container_name: diafit_postgres
+    restart: unless-stopped
     env_file:
       - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+
+  qcluster:
+    build: .
+    container_name: diafit_qcluster
+    command: uv run manage.py qcluster
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - .env
 
 volumes:
   postgres_data:

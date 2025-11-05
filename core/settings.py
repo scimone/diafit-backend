@@ -134,7 +134,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 Q_CLUSTER = {
     "name": "DjangoQ2",
-    "workers": 4,
+    "workers": 1,
     "recycle": 500,
     "timeout": 60,
     "compress": True,
