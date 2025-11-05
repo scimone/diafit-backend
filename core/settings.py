@@ -141,5 +141,5 @@ Q_CLUSTER = {
     "save_limit": 250,
     "queue_limit": 50,
     "label": "Django Q2",
-    "django_orm": "default",
+    "orm": "default",
 }
