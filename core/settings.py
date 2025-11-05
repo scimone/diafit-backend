@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "diafit_backend",
+    "summary",
+    "django_q",
 ]
 
 MIDDLEWARE = [
@@ -129,3 +131,15 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+Q_CLUSTER = {
+    "name": "DjangoQ2",
+    "workers": 4,
+    "recycle": 500,
+    "timeout": 60,
+    "compress": True,
+    "save_limit": 250,
+    "queue_limit": 50,
+    "label": "Django Q2",
+    "django_orm": "default",
+}
