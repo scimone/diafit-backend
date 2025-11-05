@@ -26,5 +26,8 @@ class BaseSummary(models.Model):
     daily_total_fats = models.IntegerField()
     daily_total_calories = models.IntegerField()
 
+    # AGP
+    agp = models.JSONField(null=True, blank=True)
+
     class Meta:
         abstract = True
