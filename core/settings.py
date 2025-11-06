@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "diafit_backend",
     "summary",
     "django_q",
+    "interactions",
 ]
 
 MIDDLEWARE = [
@@ -54,6 +55,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "interactions.middleware.APIInteractionMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
