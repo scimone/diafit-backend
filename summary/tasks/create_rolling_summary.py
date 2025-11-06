@@ -47,9 +47,6 @@ def create_rolling_summary(
         for period_days in period_days_list:
             start_date = end_date_only - timedelta(days=period_days - 1)
 
-            # Delete old rolling summaries for this period to avoid duplicates
-            RollingSummary.objects.filter(user=user, period_days=period_days).delete()
-
             if period_days <= 3:
                 # Use raw data for short periods (1-3 days)
                 start_datetime = datetime.combine(
@@ -116,23 +113,28 @@ def create_rolling_summary(
                 avg_meals_per_day = (totals["count"] or 0) / period_days
 
                 # Create rolling summary with raw data
-                RollingSummary.objects.create(
+                RollingSummary.objects.update_or_create(
                     user=user,
-                    start_date=start_date,
-                    end_date=end_date_only,
                     period_days=period_days,
-                    glucose_avg=round(glucose_avg),
-                    glucose_std=round(glucose_std),
-                    time_in_range=round(tir),
-                    time_below_range=round(tbr),
-                    time_above_range=round(tar),
-                    daily_cgm_coverage=round(cgm_coverage),
-                    daily_total_bolus=round(avg_bolus_per_day, 2),
-                    daily_total_meals=round(avg_meals_per_day, 1),
-                    daily_total_carbs=round(avg_carbs_per_day, 1),
-                    daily_total_proteins=round(avg_proteins_per_day, 1),
-                    daily_total_fats=round(avg_fats_per_day, 1),
-                    daily_total_calories=round(avg_calories_per_day),
+                    end_date=end_date_only,
+                    defaults={
+                        "start_date": start_date,
+                        "glucose_avg": round(glucose_avg),
+                        "glucose_std": round(glucose_std),
+                        "time_in_range": round(tir),
+                        "time_below_range": round(tbr),
+                        "time_above_range": round(tar),
+                        "daily_cgm_coverage": round(cgm_coverage),
+                        "daily_total_bolus": round(avg_bolus_per_day, 2),
+                        "daily_total_meals": round(avg_meals_per_day, 1),
+                        "daily_total_carbs": round(avg_carbs_per_day, 1),
+                        "daily_total_proteins": round(avg_proteins_per_day, 1),
+                        "daily_total_fats": round(avg_fats_per_day, 1),
+                        "daily_total_calories": round(avg_calories_per_day),
+                        "agp": None,
+                        "agp_summary": None,
+                        "updated_at": now,
+                    },
                 )
 
             else:
@@ -164,23 +166,30 @@ def create_rolling_summary(
                 )
 
                 # Create rolling summary with aggregated data
-                RollingSummary.objects.create(
+                RollingSummary.objects.update_or_create(
                     user=user,
-                    start_date=start_date,
-                    end_date=end_date_only,
                     period_days=period_days,
-                    glucose_avg=round(aggregated["glucose_avg"] or 0),
-                    glucose_std=round(aggregated["glucose_std"] or 0),
-                    time_in_range=round(aggregated["time_in_range"] or 0),
-                    time_below_range=round(aggregated["time_below_range"] or 0),
-                    time_above_range=round(aggregated["time_above_range"] or 0),
-                    daily_cgm_coverage=round(aggregated["daily_cgm_coverage"] or 0),
-                    daily_total_bolus=aggregated["daily_total_bolus"] or 0,
-                    daily_total_meals=aggregated["daily_total_meals"] or 0,
-                    daily_total_carbs=aggregated["daily_total_carbs"] or 0,
-                    daily_total_proteins=aggregated["daily_total_proteins"] or 0,
-                    daily_total_fats=aggregated["daily_total_fats"] or 0,
-                    daily_total_calories=aggregated["daily_total_calories"] or 0,
+                    end_date=end_date_only,
+                    defaults={
+                        "start_date": start_date,
+                        "glucose_avg": round(aggregated["glucose_avg"] or 0),
+                        "glucose_std": round(aggregated["glucose_std"] or 0),
+                        "time_in_range": round(aggregated["time_in_range"] or 0),
+                        "time_below_range": round(aggregated["time_below_range"] or 0),
+                        "time_above_range": round(aggregated["time_above_range"] or 0),
+                        "daily_cgm_coverage": round(
+                            aggregated["daily_cgm_coverage"] or 0
+                        ),
+                        "daily_total_bolus": aggregated["daily_total_bolus"] or 0,
+                        "daily_total_meals": aggregated["daily_total_meals"] or 0,
+                        "daily_total_carbs": aggregated["daily_total_carbs"] or 0,
+                        "daily_total_proteins": aggregated["daily_total_proteins"] or 0,
+                        "daily_total_fats": aggregated["daily_total_fats"] or 0,
+                        "daily_total_calories": aggregated["daily_total_calories"] or 0,
+                        "agp": None,
+                        "agp_summary": None,
+                        "updated_at": now,
+                    },
                 )
 
             print(
