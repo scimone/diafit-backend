@@ -6,7 +6,6 @@ from ninja import Schema
 
 
 class DailySummaryOutSchema(Schema):
-    id: int
     date: date
     glucose_avg: int
     glucose_std: int
@@ -23,7 +22,6 @@ class DailySummaryOutSchema(Schema):
 
 
 class WeeklySummaryOutSchema(Schema):
-    id: int
     year: int
     week: int
     glucose_avg: int
@@ -41,7 +39,6 @@ class WeeklySummaryOutSchema(Schema):
 
 
 class MonthlySummaryOutSchema(Schema):
-    id: int
     year: int
     month: int
     glucose_avg: int
@@ -59,7 +56,6 @@ class MonthlySummaryOutSchema(Schema):
 
 
 class QuarterlySummaryOutSchema(Schema):
-    id: int
     year: int
     quarter: int
     glucose_avg: int
@@ -77,7 +73,6 @@ class QuarterlySummaryOutSchema(Schema):
 
 
 class RollingSummaryOutSchema(Schema):
-    id: int
     start_date: date
     end_date: date
     period_days: int

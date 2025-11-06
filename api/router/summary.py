@@ -3,6 +3,7 @@
 from datetime import datetime
 from typing import List, Optional
 
+from django.db import models
 from ninja import Query, Router
 
 from api.schemas.summary_schema import (
@@ -33,31 +34,25 @@ def list_daily_summaries(
     request,
     user_id: int = Query(..., description="User ID"),
     count: int = Query(10, description="Maximum number of results to return"),
-    date: Optional[datetime] = Query(None, description="Specific date (YYYY-MM-DD)"),
-    start_date: Optional[datetime] = Query(
+    start: Optional[datetime] = Query(
         None, description="Date range start (YYYY-MM-DD)"
     ),
-    end_date: Optional[datetime] = Query(
-        None, description="Date range end (YYYY-MM-DD)"
-    ),
+    end: Optional[datetime] = Query(None, description="Date range end (YYYY-MM-DD)"),
 ):
     """
     Example usage:
     - /api/summary/daily?user_id=1&count=5
-    - /api/summary/daily?user_id=1&date=2024-01-15
-    - /api/summary/daily?user_id=1&start_date=2024-01-01&end_date=2024-01-31
+    - /api/summary/daily?user_id=1&start=2024-01-01&end=2024-01-31
     """
     queryset = DailySummary.objects.filter(user_id=user_id)
 
     # Apply date filtering
-    if date:
-        queryset = queryset.filter(date=date.date())
-    elif start_date and end_date:
-        queryset = queryset.filter(date__range=[start_date.date(), end_date.date()])
-    elif start_date:
-        queryset = queryset.filter(date__gte=start_date.date())
-    elif end_date:
-        queryset = queryset.filter(date__lte=end_date.date())
+    if start and end:
+        queryset = queryset.filter(date__range=[start.date(), end.date()])
+    elif start:
+        queryset = queryset.filter(date__gte=start.date())
+    elif end:
+        queryset = queryset.filter(date__lte=end.date())
 
     # Order and limit results
     queryset = queryset.order_by("-date")[:count]
@@ -74,31 +69,43 @@ def list_daily_summaries(
 def list_weekly_summaries(
     request,
     user_id: int = Query(..., description="User ID"),
+    start: Optional[str] = Query(None, description="Week range start, e.g., 2024-15"),
+    end: Optional[str] = Query(None, description="Week range end, e.g., 2024-15"),
     count: int = Query(10, description="Maximum number of results to return"),
-    year: Optional[int] = Query(None, description="Specific year"),
-    week: Optional[int] = Query(None, description="Specific week number (1-53)"),
-    start_year: Optional[int] = Query(None, description="Year range start"),
-    end_year: Optional[int] = Query(None, description="Year range end"),
 ):
     """
     Example usage:
     - /api/summary/weekly?user_id=1&count=5
-    - /api/summary/weekly?user_id=1&year=2024&week=15
-    - /api/summary/weekly?user_id=1&start_year=2023&end_year=2024
+    - /api/summary/weekly?user_id=1&start=2024-10&end=2024-15
     """
     queryset = WeeklySummary.objects.filter(user_id=user_id)
 
-    # Apply filtering
-    if year:
-        queryset = queryset.filter(year=year)
-    if week:
-        queryset = queryset.filter(week=week)
-    if start_year and end_year:
-        queryset = queryset.filter(year__range=[start_year, end_year])
-    elif start_year:
-        queryset = queryset.filter(year__gte=start_year)
-    elif end_year:
-        queryset = queryset.filter(year__lte=end_year)
+    # Apply filtering - parse year and week from start/end (format: YYYY-WW)
+    if start and end:
+        start_year, start_week = int(start.split("-")[0]), int(start.split("-")[1])
+        end_year, end_week = int(end.split("-")[0]), int(end.split("-")[1])
+        queryset = (
+            queryset.filter(year__gte=start_year, year__lte=end_year)
+            .filter(
+                models.Q(year__gt=start_year)
+                | models.Q(year=start_year, week__gte=start_week)
+            )
+            .filter(
+                models.Q(year__lt=end_year)
+                | models.Q(year=end_year, week__lte=end_week)
+            )
+        )
+    elif start:
+        start_year, start_week = int(start.split("-")[0]), int(start.split("-")[1])
+        queryset = queryset.filter(
+            models.Q(year__gt=start_year)
+            | models.Q(year=start_year, week__gte=start_week)
+        )
+    elif end:
+        end_year, end_week = int(end.split("-")[0]), int(end.split("-")[1])
+        queryset = queryset.filter(
+            models.Q(year__lt=end_year) | models.Q(year=end_year, week__lte=end_week)
+        )
 
     # Order and limit results
     queryset = queryset.order_by("-year", "-week")[:count]
@@ -115,31 +122,43 @@ def list_weekly_summaries(
 def list_monthly_summaries(
     request,
     user_id: int = Query(..., description="User ID"),
+    start: Optional[str] = Query(None, description="Month range start, e.g., 2024-01"),
+    end: Optional[str] = Query(None, description="Month range end, e.g., 2024-12"),
     count: int = Query(10, description="Maximum number of results to return"),
-    year: Optional[int] = Query(None, description="Specific year"),
-    month: Optional[int] = Query(None, description="Specific month (1-12)"),
-    start_year: Optional[int] = Query(None, description="Year range start"),
-    end_year: Optional[int] = Query(None, description="Year range end"),
 ):
     """
     Example usage:
     - /api/summary/monthly?user_id=1&count=5
-    - /api/summary/monthly?user_id=1&year=2024&month=3
-    - /api/summary/monthly?user_id=1&start_year=2023&end_year=2024
+    - /api/summary/monthly?user_id=1&start=2023-01&end=2024-12
     """
     queryset = MonthlySummary.objects.filter(user_id=user_id)
 
-    # Apply filtering
-    if year:
-        queryset = queryset.filter(year=year)
-    if month:
-        queryset = queryset.filter(month=month)
-    if start_year and end_year:
-        queryset = queryset.filter(year__range=[start_year, end_year])
-    elif start_year:
-        queryset = queryset.filter(year__gte=start_year)
-    elif end_year:
-        queryset = queryset.filter(year__lte=end_year)
+    # Apply filtering - parse year and month from format "YYYY-MM"
+    if start and end:
+        start_year, start_month = int(start.split("-")[0]), int(start.split("-")[1])
+        end_year, end_month = int(end.split("-")[0]), int(end.split("-")[1])
+        queryset = (
+            queryset.filter(year__gte=start_year, year__lte=end_year)
+            .filter(
+                models.Q(year__gt=start_year)
+                | models.Q(year=start_year, month__gte=start_month)
+            )
+            .filter(
+                models.Q(year__lt=end_year)
+                | models.Q(year=end_year, month__lte=end_month)
+            )
+        )
+    elif start:
+        start_year, start_month = int(start.split("-")[0]), int(start.split("-")[1])
+        queryset = queryset.filter(
+            models.Q(year__gt=start_year)
+            | models.Q(year=start_year, month__gte=start_month)
+        )
+    elif end:
+        end_year, end_month = int(end.split("-")[0]), int(end.split("-")[1])
+        queryset = queryset.filter(
+            models.Q(year__lt=end_year) | models.Q(year=end_year, month__lte=end_month)
+        )
 
     # Order and limit results
     queryset = queryset.order_by("-year", "-month")[:count]
@@ -156,31 +175,47 @@ def list_monthly_summaries(
 def list_quarterly_summaries(
     request,
     user_id: int = Query(..., description="User ID"),
+    start: Optional[str] = Query(
+        None, description="Quarter range start, e.g., 2024-q1"
+    ),
+    end: Optional[str] = Query(None, description="Quarter range end, e.g., 2024-q4"),
     count: int = Query(10, description="Maximum number of results to return"),
-    year: Optional[int] = Query(None, description="Specific year"),
-    quarter: Optional[int] = Query(None, description="Specific quarter (1-4)"),
-    start_year: Optional[int] = Query(None, description="Year range start"),
-    end_year: Optional[int] = Query(None, description="Year range end"),
 ):
     """
     Example usage:
     - /api/summary/quarterly?user_id=1&count=5
-    - /api/summary/quarterly?user_id=1&year=2024&quarter=1
-    - /api/summary/quarterly?user_id=1&start_year=2023&end_year=2024
+    - /api/summary/quarterly?user_id=1&start=2024-q1&end=2024-q4
     """
     queryset = QuarterlySummary.objects.filter(user_id=user_id)
 
-    # Apply filtering
-    if year:
-        queryset = queryset.filter(year=year)
-    if quarter:
-        queryset = queryset.filter(quarter=quarter)
-    if start_year and end_year:
-        queryset = queryset.filter(year__range=[start_year, end_year])
-    elif start_year:
-        queryset = queryset.filter(year__gte=start_year)
-    elif end_year:
-        queryset = queryset.filter(year__lte=end_year)
+    # Apply filtering - parse year and quarter from format "YYYY-qQQ"
+    if start and end:
+        start_year, start_quarter = int(start.split("-q")[0]), int(start.split("-q")[1])
+        end_year, end_quarter = int(end.split("-q")[0]), int(end.split("-q")[1])
+
+        queryset = (
+            queryset.filter(year__gte=start_year, year__lte=end_year)
+            .filter(
+                models.Q(year__gt=start_year)
+                | models.Q(year=start_year, quarter__gte=start_quarter)
+            )
+            .filter(
+                models.Q(year__lt=end_year)
+                | models.Q(year=end_year, quarter__lte=end_quarter)
+            )
+        )
+    elif start:
+        start_year, start_quarter = int(start.split("-q")[0]), int(start.split("-q")[1])
+        queryset = queryset.filter(
+            models.Q(year__gt=start_year)
+            | models.Q(year=start_year, quarter__gte=start_quarter)
+        )
+    elif end:
+        end_year, end_quarter = int(end.split("-q")[0]), int(end.split("-q")[1])
+        queryset = queryset.filter(
+            models.Q(year__lt=end_year)
+            | models.Q(year=end_year, quarter__lte=end_quarter)
+        )
 
     # Order and limit results
     queryset = queryset.order_by("-year", "-quarter")[:count]
@@ -199,7 +234,7 @@ def list_rolling_summaries(
     user_id: int = Query(..., description="User ID"),
     count: int = Query(10, description="Maximum number of results to return"),
     period_days: Optional[int] = Query(
-        None, description="Rolling period (1, 3, 7, 14, 30, 90)"
+        None, description="Rolling period (choose between 1, 3, 7, 14, 30, 90)"
     ),
 ):
     """
