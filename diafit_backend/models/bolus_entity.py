@@ -26,9 +26,9 @@ class BolusEntity(models.Model):
     value = models.FloatField()
     event_type = models.CharField(max_length=100)
     is_smb = models.BooleanField(default=False)
-    pump_type = models.CharField(max_length=100)
-    pump_serial = models.CharField(max_length=100)
-    pump_id = models.BigIntegerField()
+    pump_type = models.CharField(max_length=100, null=True, blank=True)
+    pump_serial = models.CharField(max_length=100, null=True, blank=True)
+    pump_id = models.BigIntegerField(null=True, blank=True)
     source = models.CharField(max_length=100, default="Unknown")
     source_id = models.CharField(max_length=100, null=True, blank=True)
 
