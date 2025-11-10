@@ -3,11 +3,11 @@ from ninja import NinjaAPI
 from api.router import (
     bolus_router,
     cgm_router,
+    heart_rate_router,
     meal_router,
     sleep_router,
     summary_router,
 )
-from api.router.heart_rate import router as heart_rate_router
 
 api = NinjaAPI(
     title="Diafit Backend API",
