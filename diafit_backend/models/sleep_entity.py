@@ -26,6 +26,15 @@ class SleepStageType(models.IntegerChoices):
     AWAKE_IN_BED = 7, "Awake in Bed"
 
 
+class SleepType(models.TextChoices):
+    """
+    Sleep session type based on duration and time of day.
+    """
+
+    NAP = "NAP", "Nap"
+    SLEEP = "SLEEP", "Sleep"
+
+
 class SleepSessionEntity(models.Model):
     """
     Sleep Session Data Model
@@ -34,6 +43,11 @@ class SleepSessionEntity(models.Model):
     user = models.ForeignKey("auth.User", on_delete=models.CASCADE)
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
+    type = models.CharField(
+        max_length=10,
+        choices=SleepType.choices,
+        default=SleepType.SLEEP,
+    )
     source = models.CharField(max_length=100, default="Unknown")
     source_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     total_duration_minutes = models.IntegerField(null=True, blank=True)
@@ -58,6 +72,17 @@ class SleepSessionEntity(models.Model):
             self.total_duration_minutes = int(
                 (self.end_time - self.start_time).total_seconds() / 60
             )
+
+            # Automatically determine sleep type
+            # NAP: duration < 3 hours AND start time between 8:00 and 23:00
+            duration_hours = self.total_duration_minutes / 60
+            start_hour = self.start_time.hour
+
+            if duration_hours < 3 and 8 <= start_hour < 23:
+                self.type = SleepType.NAP
+            else:
+                self.type = SleepType.SLEEP
+
         super().save(*args, **kwargs)
 
     def calculate_stage_durations(self):

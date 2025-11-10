@@ -50,17 +50,19 @@ class SleepSessionEntityAdmin(admin.ModelAdmin):
         "user",
         "start_time",
         "end_time",
+        "type",
         "total_duration_minutes",
         "deep_sleep_minutes",
         "light_sleep_minutes",
         "rem_sleep_minutes",
         "source",
     ]
-    list_filter = ["source", "start_time"]
+    list_filter = ["type", "source", "start_time"]
     search_fields = ["user__username", "source_id"]
     ordering = ["-start_time"]
     date_hierarchy = "start_time"
     readonly_fields = [
+        "type",
         "total_duration_minutes",
         "deep_sleep_minutes",
         "light_sleep_minutes",

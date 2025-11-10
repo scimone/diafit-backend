@@ -47,6 +47,7 @@ class SleepSessionOutSchema(Schema):
     user_id: int
     start_time: datetime
     end_time: datetime
+    type: str
     source: str
     source_id: Optional[str]
     total_duration_minutes: Optional[int]
