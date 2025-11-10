@@ -1,9 +1,9 @@
 from django.db import models
 
-from .base_summary import BaseSummary
+from .aggregated_summary import AggregatedSummary
 
 
-class WeeklySummary(BaseSummary):
+class WeeklySummary(AggregatedSummary):
     """
     Model to store weekly summaries.
     """

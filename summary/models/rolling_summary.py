@@ -1,9 +1,9 @@
 from django.db import models
 
-from .base_summary import BaseSummary
+from summary.models.aggregated_summary import AggregatedSummary
 
 
-class RollingSummary(BaseSummary):
+class RollingSummary(AggregatedSummary):
     """
     Model to store rolling summaries (e.g., 14-day, 30-day, 90-day periods).
     """

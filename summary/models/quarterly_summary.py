@@ -1,9 +1,9 @@
 from django.db import models
 
-from .base_summary import BaseSummary
+from summary.models.aggregated_summary import AggregatedSummary
 
 
-class QuarterlySummary(BaseSummary):
+class QuarterlySummary(AggregatedSummary):
     """
     Model to store quarterly summaries.
     """

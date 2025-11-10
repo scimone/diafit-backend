@@ -1,9 +1,9 @@
 from django.db import models
 
-from .base_summary import BaseSummary
+from summary.models.aggregated_summary import AggregatedSummary
 
 
-class MonthlySummary(BaseSummary):
+class MonthlySummary(AggregatedSummary):
     """
     Model to store monthly summaries.
     """
