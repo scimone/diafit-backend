@@ -9,7 +9,7 @@ from django.db.models import Avg, Count, StdDev, Sum
 from django.utils import timezone
 
 from summary.models import DailySummary
-from summary.util.compute_cgm_coverage import compute_cgm_coverage
+from summary.util.calculate_cgm_coverage import calculate_cgm_coverage
 
 
 def create_daily_summary(
@@ -71,7 +71,7 @@ def create_daily_summary(
 
         # --- CGM coverage ---
         timestamps = list(cgm_qs.values_list("timestamp", flat=True))
-        cgm_coverage = compute_cgm_coverage(timestamps, start, end)
+        cgm_coverage = calculate_cgm_coverage(timestamps, start, end)
 
         # --- Bolus stats ---
         bolus_qs = user.bolusentity_set.filter(timestamp_utc__range=(start, end))

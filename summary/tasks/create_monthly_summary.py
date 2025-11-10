@@ -1,6 +1,7 @@
 # summary/tasks/create_monthly_summary.py
 
-from datetime import date
+from datetime import date, datetime
+from datetime import timezone as dt_timezone
 from typing import Optional
 
 from django.contrib.auth import get_user_model
@@ -8,6 +9,7 @@ from django.db.models import Avg
 from django.utils import timezone
 
 from summary.models import DailySummary, MonthlySummary
+from summary.util.calculate_agp import calculate_agp_from_cgm
 
 
 def create_monthly_summary(
@@ -71,6 +73,18 @@ def create_monthly_summary(
             daily_total_calories=Avg("daily_total_calories"),  # Average per day
         )
 
+        # Calculate AGP from CGM data for the month
+        start_datetime = datetime.combine(
+            month_start, datetime.min.time(), tzinfo=dt_timezone.utc
+        )
+        end_datetime = datetime.combine(
+            month_end, datetime.max.time(), tzinfo=dt_timezone.utc
+        )
+        cgm_data = user.cgmentity_set.filter(
+            timestamp__range=(start_datetime, end_datetime)
+        )
+        agp_data = calculate_agp_from_cgm(cgm_data)
+
         MonthlySummary.objects.update_or_create(
             user=user,
             year=target_year,
@@ -88,6 +102,7 @@ def create_monthly_summary(
                 "daily_total_proteins": aggregated["daily_total_proteins"] or 0,
                 "daily_total_fats": aggregated["daily_total_fats"] or 0,
                 "daily_total_calories": aggregated["daily_total_calories"] or 0,
+                "agp": agp_data,
             },
         )
 

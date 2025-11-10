@@ -9,6 +9,7 @@ from django.db.models import Avg, Count, StdDev, Sum
 from django.utils import timezone
 
 from summary.models import DailySummary, RollingSummary
+from summary.util.calculate_agp import calculate_agp_from_cgm
 
 
 def create_rolling_summary(
@@ -112,6 +113,9 @@ def create_rolling_summary(
                 avg_calories_per_day = (totals["calories"] or 0) / period_days
                 avg_meals_per_day = (totals["count"] or 0) / period_days
 
+                # Calculate AGP for short periods
+                agp_data = calculate_agp_from_cgm(cgm_qs)
+
                 # Create rolling summary with raw data
                 RollingSummary.objects.update_or_create(
                     user=user,
@@ -131,7 +135,7 @@ def create_rolling_summary(
                         "daily_total_proteins": round(avg_proteins_per_day, 1),
                         "daily_total_fats": round(avg_fats_per_day, 1),
                         "daily_total_calories": round(avg_calories_per_day),
-                        "agp": None,
+                        "agp": agp_data,
                         "agp_summary": None,
                         "updated_at": now,
                     },
@@ -165,6 +169,20 @@ def create_rolling_summary(
                     daily_total_calories=Avg("daily_total_calories"),  # Average per day
                 )
 
+                # Calculate AGP from CGM data for longer periods
+                start_datetime = datetime.combine(
+                    start_date, datetime.min.time(), tzinfo=dt_timezone.utc
+                )
+                end_datetime = datetime.combine(
+                    end_date_only, datetime.max.time(), tzinfo=dt_timezone.utc
+                )
+                if end_datetime > now:
+                    end_datetime = now
+                cgm_data = user.cgmentity_set.filter(
+                    timestamp__range=(start_datetime, end_datetime)
+                )
+                agp_data = calculate_agp_from_cgm(cgm_data)
+
                 # Create rolling summary with aggregated data
                 RollingSummary.objects.update_or_create(
                     user=user,
@@ -186,7 +204,7 @@ def create_rolling_summary(
                         "daily_total_proteins": aggregated["daily_total_proteins"] or 0,
                         "daily_total_fats": aggregated["daily_total_fats"] or 0,
                         "daily_total_calories": aggregated["daily_total_calories"] or 0,
-                        "agp": None,
+                        "agp": agp_data,
                         "agp_summary": None,
                         "updated_at": now,
                     },

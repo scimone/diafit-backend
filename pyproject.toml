@@ -10,6 +10,8 @@ dependencies = [
     "django-q2>=1.8.0",
     "gunicorn>=23.0.0",
     "numpy>=2.3.4",
+    "pandas>=2.3.3",
     "psycopg2-binary>=2.9.11",
     "python-dotenv>=1.2.1",
+    "scipy>=1.16.3",
 ]

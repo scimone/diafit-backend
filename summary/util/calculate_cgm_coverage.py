@@ -5,7 +5,7 @@ from statistics import median
 from typing import List, Optional
 
 
-def compute_cgm_coverage(
+def calculate_cgm_coverage(
     timestamps: List[datetime],
     start: datetime,
     end: datetime,
