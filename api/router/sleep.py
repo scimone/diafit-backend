@@ -107,19 +107,26 @@ def list_sleep_sessions(
 
 
 @router.get(
-    path="/{session_id}",
+    path="/{source_id}",
     response=SleepSessionOutSchema,
     summary="Get Sleep Session",
     description="Retrieve a specific sleep session by ID with all its stages.",
 )
-def get_sleep_session(request, session_id: int):
+def get_sleep_session(
+    request,
+    source_id: str,
+    include_stages: bool = Query(True, description="Include sleep stages in response"),
+):
     """
     Get a single sleep session with all its stages.
     """
     try:
-        session = SleepSessionEntity.objects.prefetch_related("stages").get(
-            id=session_id
-        )
+        if include_stages:
+            session = SleepSessionEntity.objects.prefetch_related("stages").get(
+                source_id=source_id
+            )
+        else:
+            session = SleepSessionEntity.objects.get(source_id=source_id)
     except SleepSessionEntity.DoesNotExist:
         return 404, {"message": "Sleep session not found"}
 
@@ -128,7 +135,9 @@ def get_sleep_session(request, session_id: int):
             **session.__dict__,
             "stages": [
                 SleepStageOutSchema(**stage.__dict__) for stage in session.stages.all()
-            ],
+            ]
+            if include_stages
+            else None,
         }
     )
 
