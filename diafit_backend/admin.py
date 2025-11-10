@@ -3,6 +3,7 @@ from django.contrib import admin
 from diafit_backend.models import (
     BolusEntity,
     CgmEntity,
+    HeartRateEntity,
     MealEntity,
     SleepSessionEntity,
     SleepStageEntity,
@@ -78,3 +79,12 @@ class SleepStageEntityAdmin(admin.ModelAdmin):
     search_fields = ["session__user__username"]
     ordering = ["session", "start_time"]
     readonly_fields = ["duration_minutes"]
+
+
+@admin.register(HeartRateEntity)
+class HeartRateEntityAdmin(admin.ModelAdmin):
+    list_display = ["user", "timestamp", "value", "device", "source"]
+    list_filter = ["device", "source", "timestamp"]
+    search_fields = ["user__username", "source_id"]
+    ordering = ["-timestamp"]
+    date_hierarchy = "timestamp"

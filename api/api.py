@@ -7,6 +7,7 @@ from api.router import (
     sleep_router,
     summary_router,
 )
+from api.router.heart_rate import router as heart_rate_router
 
 api = NinjaAPI(
     title="Diafit Backend API",
@@ -20,3 +21,4 @@ api.add_router("/bolus", bolus_router)
 api.add_router("/meal", meal_router)
 api.add_router("/summary", summary_router)
 api.add_router("/sleep", sleep_router)
+api.add_router("/heart_rate", heart_rate_router)
