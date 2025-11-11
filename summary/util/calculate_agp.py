@@ -159,6 +159,63 @@ def format_agp_json(time_array, p10, p25, p50, p75, p90):
     }
 
 
+def calculate_agp_summary(agp_data):
+    """
+    Calculate AGP summary statistics by time period.
+
+    Args:
+        agp_data: Formatted AGP JSON data with time and percentile arrays
+
+    Returns:
+        dict or None: Summary statistics by period (night, morning, afternoon, evening)
+    """
+    if not agp_data or "time" not in agp_data:
+        return None
+
+    # Define time periods (in hours)
+    periods = {
+        "night": (0, 6),  # 00:00 - 06:00
+        "morning": (6, 12),  # 06:00 - 12:00
+        "afternoon": (12, 18),  # 12:00 - 18:00
+        "evening": (18, 24),  # 18:00 - 24:00
+    }
+
+    summary = {}
+
+    for period_name, (start_hour, end_hour) in periods.items():
+        # Find indices for this time period
+        indices = []
+        for i, time_str in enumerate(agp_data["time"]):
+            hour = int(time_str.split(":")[0])
+            if start_hour <= hour < end_hour:
+                indices.append(i)
+
+        if not indices:
+            continue
+
+        # Extract percentile values for this period
+        p10_values = [agp_data["p10"][i] for i in indices]
+        p25_values = [agp_data["p25"][i] for i in indices]
+        p50_values = [agp_data["p50"][i] for i in indices]
+        p75_values = [agp_data["p75"][i] for i in indices]
+        p90_values = [agp_data["p90"][i] for i in indices]
+
+        # Calculate average ranges and median for the period
+        summary[period_name] = {
+            "p10_p90_range": [
+                round(sum(p10_values) / len(p10_values), 1),
+                round(sum(p90_values) / len(p90_values), 1),
+            ],
+            "p25_p75_range": [
+                round(sum(p25_values) / len(p25_values), 1),
+                round(sum(p75_values) / len(p75_values), 1),
+            ],
+            "p50": round(sum(p50_values) / len(p50_values), 1),
+        }
+
+    return summary if summary else None
+
+
 def calculate_agp_from_cgm(cgm_queryset, smoothed=True):
     """
     Calculate AGP from CGM queryset and return formatted JSON.

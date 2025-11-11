@@ -9,7 +9,7 @@ from django.db.models import Avg
 from django.utils import timezone
 
 from summary.models import DailySummary, MonthlySummary
-from summary.util.calculate_agp import calculate_agp_from_cgm
+from summary.util.calculate_agp import calculate_agp_from_cgm, calculate_agp_summary
 
 
 def create_monthly_summary(
@@ -84,6 +84,7 @@ def create_monthly_summary(
             timestamp__range=(start_datetime, end_datetime)
         )
         agp_data = calculate_agp_from_cgm(cgm_data)
+        agp_summary_data = calculate_agp_summary(agp_data) if agp_data else None
 
         MonthlySummary.objects.update_or_create(
             user=user,
@@ -103,6 +104,7 @@ def create_monthly_summary(
                 "daily_total_fats": aggregated["daily_total_fats"] or 0,
                 "daily_total_calories": aggregated["daily_total_calories"] or 0,
                 "agp": agp_data,
+                "agp_summary": agp_summary_data,
             },
         )
 

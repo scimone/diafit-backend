@@ -29,10 +29,10 @@ class AggregatedSummary(BaseSummary):
     # }
     agp_summary = models.JSONField(null=True, blank=True)
     # {
-    #     "night": {"p10_p90_range": [75, 180], "p50": 110},
-    #     "morning": {"p10_p90_range": [80, 200], "p50": 130},
-    #     "afternoon": {"p10_p90_range": [85, 175], "p50": 120},
-    #     "evening": {"p10_p90_range": [90, 220], "p50": 140}
+    #     "night": {"p10_p90_range": [75, 180], "p25_p75_range": [x, x],"p50": 110},
+    #     "morning": {"p10_p90_range": [80, 200], "p25_p75_range": [x, x],"p50": 130},
+    #     "afternoon": {"p10_p90_range": [85, 175], "p25_p75_range": [x, x],"p50": 120},
+    #     "evening": {"p10_p90_range": [90, 220], "p25_p75_range": [x, x],"p50": 140}
     # }
 
     # agp_trends = models.JSONField(null=True, blank=True)
