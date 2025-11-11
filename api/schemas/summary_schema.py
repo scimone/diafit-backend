@@ -1,6 +1,7 @@
 # api/schemas/summary_schema.py
 
 from datetime import date
+from typing import List, Optional
 
 from ninja import Schema
 
@@ -37,6 +38,10 @@ class WeeklySummaryOutSchema(Schema):
     daily_total_meals: float
     daily_total_bolus: float
 
+    # AGP data fields
+    agp_summary: Optional[dict] = None
+    agp_trends: Optional[List[str]] = None
+
 
 class MonthlySummaryOutSchema(Schema):
     year: int
@@ -53,6 +58,10 @@ class MonthlySummaryOutSchema(Schema):
     daily_total_calories: int
     daily_total_meals: float
     daily_total_bolus: float
+
+    # AGP data fields
+    agp_summary: Optional[dict] = None
+    agp_trends: Optional[List[str]] = None
 
 
 class QuarterlySummaryOutSchema(Schema):
@@ -71,6 +80,10 @@ class QuarterlySummaryOutSchema(Schema):
     daily_total_meals: float
     daily_total_bolus: float
 
+    # AGP data fields
+    agp_summary: Optional[dict] = None
+    agp_trends: Optional[List[str]] = None
+
 
 class RollingSummaryOutSchema(Schema):
     start_date: date
@@ -88,3 +101,7 @@ class RollingSummaryOutSchema(Schema):
     daily_total_calories: int
     daily_total_meals: float
     daily_total_bolus: float
+
+    # AGP data fields
+    agp_summary: Optional[dict] = None
+    agp_trends: Optional[List[str]] = None
