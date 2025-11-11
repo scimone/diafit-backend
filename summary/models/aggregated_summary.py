@@ -35,11 +35,11 @@ class AggregatedSummary(BaseSummary):
     #     "evening": {"p10_p90_range": [90, 220], "p25_p75_range": [x, x],"p50": 140}
     # }
 
-    # agp_trends = models.JSONField(null=True, blank=True)
-    # "notable_patterns": [
-    #     "Mild post-breakfast spikes around 8:00–9:00 AM.",
-    #     "Stable overnight glucose levels.",
-    #     "Increased variability in evenings, possibly after dinner."
+    agp_trends = models.JSONField(null=True, blank=True)
+    # [
+    #     "Post-breakfast glucose spike",
+    #     "Stable overnight glucose in target range",
+    #     "Elevated evening glucose levels"
     # ]
 
     class Meta:

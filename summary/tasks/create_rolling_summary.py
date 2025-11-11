@@ -9,7 +9,11 @@ from django.db.models import Avg, Count, StdDev, Sum
 from django.utils import timezone
 
 from summary.models import DailySummary, RollingSummary
-from summary.util.calculate_agp import calculate_agp_from_cgm, calculate_agp_summary
+from summary.util.calculate_agp import (
+    calculate_agp_from_cgm,
+    calculate_agp_summary,
+    detect_agp_patterns,
+)
 
 
 def create_rolling_summary(
@@ -116,6 +120,7 @@ def create_rolling_summary(
                 # Calculate AGP for short periods
                 agp_data = calculate_agp_from_cgm(cgm_qs)
                 agp_summary_data = calculate_agp_summary(agp_data) if agp_data else None
+                agp_patterns = detect_agp_patterns(agp_data) if agp_data else None
 
                 # Create rolling summary with raw data
                 RollingSummary.objects.update_or_create(
@@ -138,6 +143,7 @@ def create_rolling_summary(
                         "daily_total_calories": round(avg_calories_per_day),
                         "agp": agp_data,
                         "agp_summary": agp_summary_data,
+                        "agp_trends": agp_patterns,
                         "updated_at": now,
                     },
                 )
@@ -184,6 +190,7 @@ def create_rolling_summary(
                 )
                 agp_data = calculate_agp_from_cgm(cgm_data)
                 agp_summary_data = calculate_agp_summary(agp_data) if agp_data else None
+                agp_patterns = detect_agp_patterns(agp_data) if agp_data else None
 
                 # Create rolling summary with aggregated data
                 RollingSummary.objects.update_or_create(
@@ -208,6 +215,7 @@ def create_rolling_summary(
                         "daily_total_calories": aggregated["daily_total_calories"] or 0,
                         "agp": agp_data,
                         "agp_summary": agp_summary_data,
+                        "agp_trends": agp_patterns,
                         "updated_at": now,
                     },
                 )
