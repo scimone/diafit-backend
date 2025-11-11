@@ -305,12 +305,97 @@ def detect_agp_patterns(agp_data: dict):
 
     patterns = []
 
+    # ========================================================================
+    # CONFIGURATION - All thresholds and time windows
+    # ========================================================================
+
+    # Time configuration
+    POINTS_PER_HOUR = 12  # 5-min intervals: 60/5 = 12 points per hour
+
+    # Clinical glucose thresholds (mg/dL)
+    HYPO_THRESHOLD = 70  # Hypoglycemia threshold
+    SEVERE_HYPO_THRESHOLD = 54  # Severe hypoglycemia threshold
+    TARGET_LOW = 70  # General target range low
+    TARGET_HIGH = 180  # General target range high
+    VERY_HIGH = 250  # Very high glucose threshold
+    OPTIMAL_LOW = 70  # Optimal range low
+    OPTIMAL_HIGH = 140  # Optimal range high
+
+    # Fasting glucose thresholds (mg/dL)
+    FASTING_OPTIMAL_LOW = 70
+    FASTING_OPTIMAL_HIGH = 100  # Stricter for fasting
+    FASTING_TARGET_HIGH = 130  # Maximum acceptable fasting
+
+    # Variability thresholds (mg/dL)
+    WIDE_IQR = 60  # High daily variability threshold
+    TIGHT_IQR = 30  # Tight control threshold
+    CONSISTENCY_THRESHOLD = 100  # Outer band threshold for consistency
+    CONSISTENT_OUTER_BAND = 40  # Very narrow outer band
+
+    # Meal spike thresholds
+    MEAL_SPIKE_THRESHOLD = 50  # mg/dL rise for meal spike detection
+
+    # Dawn phenomenon
+    DAWN_START_HOUR = 3  # Start of dawn phenomenon window
+    DAWN_END_HOUR = 7  # End of dawn phenomenon window
+    DAWN_RISE_THRESHOLD = 20  # mg/dL rise to detect dawn phenomenon
+
+    # Somogyi effect
+    SOMOGYI_NIGHT_START_HOUR = 2  # Early night low check start
+    SOMOGYI_NIGHT_END_HOUR = 4  # Early night low check end
+    SOMOGYI_MORNING_START_HOUR = 6  # Morning rebound check start
+    SOMOGYI_MORNING_END_HOUR = 8  # Morning rebound check end
+
+    # Fasting glucose window
+    FASTING_START_HOUR = 5  # Fasting glucose window start
+    FASTING_END_HOUR = 7  # Fasting glucose window end
+
+    # Meal timing windows (hours)
+    BREAKFAST_PRE_HOUR = 6
+    BREAKFAST_START_HOUR = 7
+    BREAKFAST_END_HOUR = 10
+
+    LUNCH_PRE_HOUR = 11
+    LUNCH_START_HOUR = 12
+    LUNCH_END_HOUR = 15
+
+    DINNER_PRE_HOUR = 18
+    DINNER_START_HOUR = 19
+    DINNER_END_HOUR = 22
+
+    # Meal response quality thresholds
+    RAPID_SPIKE_TIME_THRESHOLD = 30  # minutes - rapid spike if peak <30 min
+    RAPID_SPIKE_RISE_THRESHOLD = 50  # mg/dL - rapid spike if rise >50
+    PROLONGED_ELEVATION_DURATION = 90  # minutes - prolonged if elevated >90 min
+    ELEVATION_THRESHOLD_OFFSET = 30  # mg/dL above baseline to consider "elevated"
+    RECOVERY_THRESHOLD = 20  # mg/dL from baseline to consider "recovered"
+    RECOVERY_THRESHOLD_DELAYED = 30  # mg/dL from baseline for delayed recovery
+
+    # Good meal response criteria
+    GOOD_MEAL_RISE_MIN = 20  # mg/dL minimum rise
+    GOOD_MEAL_RISE_MAX = 40  # mg/dL maximum rise
+    GOOD_MEAL_PEAK_TIME_MIN = 30  # minutes minimum time to peak
+    GOOD_MEAL_PEAK_TIME_MAX = 90  # minutes maximum time to peak
+
+    # Consistency check windows
+    MORNING_CONSISTENCY_START_HOUR = 7
+    MORNING_CONSISTENCY_END_HOUR = 9
+    BEDTIME_CONSISTENCY_START_HOUR = 21
+    BEDTIME_CONSISTENCY_END_HOUR = 23
+    INCONSISTENT_MORNING_THRESHOLD = 100  # mg/dL outer band
+    INCONSISTENT_BEDTIME_THRESHOLD = 100  # mg/dL outer band
+
+    # Overnight stability
+    STABLE_NIGHT_IQR = 25  # mg/dL - stable if IQR < 25
+    FLUCTUATING_NIGHT_IQR = 50  # mg/dL - fluctuating if IQR > 50
+
+    # ========================================================================
+    # END CONFIGURATION
+    # ========================================================================
+
     # Basic metrics
     iqr = p75 - p25  # Interquartile range (25-75% band) - daily variation
     outer_band = p90 - p10  # Outer band (10-90%) - occasional fluctuations
-
-    # Convert hour-based periods to index arrays (288 points = 12 points per hour)
-    POINTS_PER_HOUR = 12  # 5-min intervals: 60/5 = 12 points per hour
 
     # Helper function to get indices for a time period (handles wraparound)
     def get_period_indices(start_hour, end_hour):
@@ -327,18 +412,6 @@ def detect_agp_patterns(agp_data: dict):
     sections = {}
     for name, (start, end) in TIME_PERIODS.items():
         sections[name] = get_period_indices(start, end)
-
-    # Clinical thresholds
-    HYPO_THRESHOLD = 70  # mg/dL
-    SEVERE_HYPO_THRESHOLD = 54  # mg/dL
-    TARGET_HIGH = 180  # mg/dL
-    VERY_HIGH = 250  # mg/dL
-    OPTIMAL_LOW = 70
-    OPTIMAL_HIGH = 140
-
-    # Variability thresholds
-    WIDE_IQR = 60  # mg/dL - indicates high daily variability
-    TIGHT_IQR = 30  # mg/dL - indicates tight control
 
     # ========================================================================
     # A. HYPOGLYCEMIA PATTERNS (Time Below Range)
@@ -391,38 +464,170 @@ def detect_agp_patterns(agp_data: dict):
                 patterns.append(f"Frequent glucose elevations during {name} period")
 
     # Specific meal-related spikes (check for significant rises)
-    # Post-breakfast spike (7-10 AM)
-    breakfast_start_idx = 7 * POINTS_PER_HOUR
-    breakfast_end_idx = 10 * POINTS_PER_HOUR
-    pre_breakfast_idx = 6 * POINTS_PER_HOUR
+    # Post-breakfast spike
+    breakfast_start_idx = BREAKFAST_START_HOUR * POINTS_PER_HOUR
+    breakfast_end_idx = BREAKFAST_END_HOUR * POINTS_PER_HOUR
+    pre_breakfast_idx = BREAKFAST_PRE_HOUR * POINTS_PER_HOUR
 
     if breakfast_end_idx <= len(p50):
         pre_breakfast = np.mean(p50[pre_breakfast_idx:breakfast_start_idx])
         post_breakfast = np.max(p50[breakfast_start_idx:breakfast_end_idx])
-        if post_breakfast - pre_breakfast > 50:
+        if post_breakfast - pre_breakfast > MEAL_SPIKE_THRESHOLD:
             patterns.append("Post-breakfast glucose spike")
 
-    # Post-lunch spike (13-15 PM)
-    lunch_start_idx = 13 * POINTS_PER_HOUR
-    lunch_end_idx = 15 * POINTS_PER_HOUR
-    pre_lunch_idx = 12 * POINTS_PER_HOUR
+    # Post-lunch spike
+    lunch_start_idx = LUNCH_START_HOUR * POINTS_PER_HOUR
+    lunch_end_idx = LUNCH_END_HOUR * POINTS_PER_HOUR
+    pre_lunch_idx = LUNCH_PRE_HOUR * POINTS_PER_HOUR
 
     if lunch_end_idx <= len(p50):
         pre_lunch = np.mean(p50[pre_lunch_idx:lunch_start_idx])
         post_lunch = np.max(p50[lunch_start_idx:lunch_end_idx])
-        if post_lunch - pre_lunch > 50:
+        if post_lunch - pre_lunch > MEAL_SPIKE_THRESHOLD:
             patterns.append("Post-lunch glucose spike")
 
-    # Post-dinner spike (19-21 PM)
-    dinner_start_idx = 19 * POINTS_PER_HOUR
-    dinner_end_idx = 21 * POINTS_PER_HOUR
-    pre_dinner_idx = 18 * POINTS_PER_HOUR
+    # Post-dinner spike
+    dinner_start_idx = DINNER_START_HOUR * POINTS_PER_HOUR
+    dinner_end_idx = DINNER_END_HOUR * POINTS_PER_HOUR
+    pre_dinner_idx = DINNER_PRE_HOUR * POINTS_PER_HOUR
 
     if dinner_end_idx <= len(p50):
         pre_dinner = np.mean(p50[pre_dinner_idx:dinner_start_idx])
         post_dinner = np.max(p50[dinner_start_idx:dinner_end_idx])
-        if post_dinner - pre_dinner > 50:
+        if post_dinner - pre_dinner > MEAL_SPIKE_THRESHOLD:
             patterns.append("Post-dinner glucose spike")
+
+    # ========================================================================
+    # F. DAWN PHENOMENON & SOMOGYI EFFECT
+    # ========================================================================
+
+    # Dawn phenomenon - glucose rises without eating (physiological)
+    dawn_start_idx = DAWN_START_HOUR * POINTS_PER_HOUR
+    dawn_end_idx = DAWN_END_HOUR * POINTS_PER_HOUR
+
+    dawn_start_glucose = np.mean(
+        p50[dawn_start_idx : dawn_start_idx + 6]
+    )  # First 30 min
+    dawn_end_glucose = np.mean(p50[dawn_end_idx - 6 : dawn_end_idx])  # Last 30 min
+    dawn_rise = dawn_end_glucose - dawn_start_glucose
+
+    if dawn_rise > DAWN_RISE_THRESHOLD:
+        patterns.append("Dawn phenomenon detected")
+
+    # Somogyi effect - rebound hyperglycemia after nocturnal hypoglycemia
+    early_night_idx = SOMOGYI_NIGHT_START_HOUR * POINTS_PER_HOUR
+    early_night_end = SOMOGYI_NIGHT_END_HOUR * POINTS_PER_HOUR
+    morning_idx = SOMOGYI_MORNING_START_HOUR * POINTS_PER_HOUR
+    morning_end = SOMOGYI_MORNING_END_HOUR * POINTS_PER_HOUR
+
+    early_night_min = np.min(p50[early_night_idx:early_night_end])
+    morning_glucose = np.mean(p50[morning_idx:morning_end])
+
+    if early_night_min < HYPO_THRESHOLD and morning_glucose > TARGET_HIGH:
+        patterns.append("Possible rebound hyperglycemia (Somogyi effect)")
+
+    # ========================================================================
+    # G. FASTING GLUCOSE PATTERNS
+    # Early morning fasting glucose before typical breakfast
+    # ========================================================================
+
+    fasting_start_idx = FASTING_START_HOUR * POINTS_PER_HOUR
+    fasting_end_idx = FASTING_END_HOUR * POINTS_PER_HOUR
+
+    fasting_p50 = p50[fasting_start_idx:fasting_end_idx]
+    fasting_median = np.mean(fasting_p50)
+    fasting_iqr = np.mean(iqr[fasting_start_idx:fasting_end_idx])
+
+    if fasting_median > FASTING_TARGET_HIGH:
+        patterns.append("Elevated fasting glucose levels")
+    elif (
+        FASTING_OPTIMAL_LOW <= fasting_median <= FASTING_OPTIMAL_HIGH
+        and fasting_iqr < TIGHT_IQR
+    ):
+        patterns.append("Optimal fasting glucose control")
+    elif fasting_median < FASTING_OPTIMAL_LOW:
+        patterns.append("Low fasting glucose levels")
+
+    # ========================================================================
+    # H. POST-MEAL PATTERN QUALITY
+    # Analyze quality of glucose response after meals
+    # ========================================================================
+
+    def analyze_meal_response(pre_idx, meal_start_idx, meal_end_idx, meal_name):
+        """Analyze detailed meal response pattern"""
+
+        # 1. Pre-meal baseline
+        baseline = np.mean(p50[pre_idx:meal_start_idx])
+
+        # 2. Peak glucose and time to peak
+        post_meal_window = p50[meal_start_idx:meal_end_idx]
+        peak_glucose = np.max(post_meal_window)
+        peak_idx_relative = np.argmax(post_meal_window)
+        time_to_peak_minutes = peak_idx_relative * 5  # 5-min intervals
+
+        # 3. Rise magnitude
+        glucose_rise = peak_glucose - baseline
+
+        # 4. Duration of elevation (how long >baseline + threshold)
+        elevated_threshold = baseline + ELEVATION_THRESHOLD_OFFSET
+        elevated_count = np.sum(post_meal_window > elevated_threshold)
+        duration_elevated_minutes = elevated_count * 5
+
+        # 5. Return to baseline (check last 30 min of window)
+        recovery_window = p50[meal_end_idx - 6 : meal_end_idx]  # Last 30 min
+        final_glucose = np.mean(recovery_window)
+        returns_to_baseline = abs(final_glucose - baseline) < RECOVERY_THRESHOLD
+
+        # Detect patterns
+        # Rapid spike (peak quickly and high rise)
+        if (
+            time_to_peak_minutes < RAPID_SPIKE_TIME_THRESHOLD
+            and glucose_rise > RAPID_SPIKE_RISE_THRESHOLD
+        ):
+            patterns.append(f"Rapid post-{meal_name} glucose spike")
+
+        # Prolonged elevation (stays high for extended period)
+        if duration_elevated_minutes > PROLONGED_ELEVATION_DURATION:
+            patterns.append(f"Extended post-{meal_name} elevation")
+
+        # Delayed recovery (doesn't return to baseline by end of window)
+        if (
+            not returns_to_baseline
+            and final_glucose > baseline + RECOVERY_THRESHOLD_DELAYED
+        ):
+            patterns.append(f"Slow post-{meal_name} glucose recovery")
+
+        # Good meal response (moderate rise, timely peak, good recovery)
+        if (
+            GOOD_MEAL_RISE_MIN < glucose_rise < GOOD_MEAL_RISE_MAX
+            and GOOD_MEAL_PEAK_TIME_MIN < time_to_peak_minutes < GOOD_MEAL_PEAK_TIME_MAX
+            and returns_to_baseline
+        ):
+            patterns.append(f"Well-controlled post-{meal_name} glucose response")
+
+    # Analyze each meal
+    # Breakfast
+    breakfast_pre_h = BREAKFAST_PRE_HOUR * POINTS_PER_HOUR
+    breakfast_start_h = BREAKFAST_START_HOUR * POINTS_PER_HOUR
+    breakfast_end_h = BREAKFAST_END_HOUR * POINTS_PER_HOUR
+    if breakfast_end_h <= len(p50):
+        analyze_meal_response(
+            breakfast_pre_h, breakfast_start_h, breakfast_end_h, "breakfast"
+        )
+
+    # Lunch
+    lunch_pre_h = LUNCH_PRE_HOUR * POINTS_PER_HOUR
+    lunch_start_h = LUNCH_START_HOUR * POINTS_PER_HOUR
+    lunch_end_h = LUNCH_END_HOUR * POINTS_PER_HOUR
+    if lunch_end_h <= len(p50):
+        analyze_meal_response(lunch_pre_h, lunch_start_h, lunch_end_h, "lunch")
+
+    # Dinner
+    dinner_pre_h = DINNER_PRE_HOUR * POINTS_PER_HOUR
+    dinner_start_h = DINNER_START_HOUR * POINTS_PER_HOUR
+    dinner_end_h = DINNER_END_HOUR * POINTS_PER_HOUR
+    if dinner_end_h <= len(p50):
+        analyze_meal_response(dinner_pre_h, dinner_start_h, dinner_end_h, "dinner")
 
     # ========================================================================
     # C. GLUCOSE VARIABILITY
@@ -470,5 +675,26 @@ def detect_agp_patterns(agp_data: dict):
         patterns.append("Overall glucose trending low")
     elif overall_median > TARGET_HIGH:
         patterns.append("Overall glucose trending high")
+
+    # ========================================================================
+    # J. TIME-OF-DAY CONSISTENCY
+    # Same-time-different-day variability (how consistent are patterns?)
+    # ========================================================================
+
+    # Check consistency for each time period using outer band width
+    # Wide outer band = inconsistent day-to-day patterns
+    # Narrow outer band = consistent patterns
+    for name, indices in sections.items():
+        if len(indices) > 0:
+            period_outer_band = outer_band[indices]
+            avg_outer_band = np.mean(period_outer_band)
+
+            # High outer band width = inconsistent patterns
+            if avg_outer_band > CONSISTENCY_THRESHOLD:
+                patterns.append(f"Inconsistent glucose patterns during {name} period")
+
+            # Very narrow outer band = very consistent
+            elif avg_outer_band < CONSISTENT_OUTER_BAND:
+                patterns.append(f"Consistent glucose patterns during {name} period")
 
     return patterns if patterns else None
