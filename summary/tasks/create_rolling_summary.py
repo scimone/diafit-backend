@@ -121,9 +121,9 @@ def create_rolling_summary(
                 RollingSummary.objects.update_or_create(
                     user=user,
                     period_days=period_days,
-                    end_date=end_date_only,
                     defaults={
                         "start_date": start_date,
+                        "end_date": end_date_only,
                         "glucose_avg": round(glucose_avg),
                         "glucose_std": round(glucose_std),
                         "time_in_range": round(tir),
@@ -189,9 +189,9 @@ def create_rolling_summary(
                 RollingSummary.objects.update_or_create(
                     user=user,
                     period_days=period_days,
-                    end_date=end_date_only,
                     defaults={
                         "start_date": start_date,
+                        "end_date": end_date_only,
                         "glucose_avg": round(aggregated["glucose_avg"] or 0),
                         "glucose_std": round(aggregated["glucose_std"] or 0),
                         "time_in_range": round(aggregated["time_in_range"] or 0),
