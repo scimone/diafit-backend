@@ -17,7 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.shortcuts import redirect
-from django.urls import path
+from django.urls import include, path
 
 from api.api import api
 
@@ -25,4 +25,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", lambda request: redirect("api/docs", permanent=True)),
     path("api/", api.urls),
+    path("summary/", include("summary.urls")),
 ]
