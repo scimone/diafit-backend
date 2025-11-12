@@ -422,24 +422,23 @@ def detect_agp_patterns(agp_data: dict):
         if len(indices) > 0:
             period_p50 = p50[indices]
             period_p25 = p25[indices]
+            period_p10 = p10[indices]
 
             # Check if median dips below threshold
             if np.min(period_p50) < HYPO_THRESHOLD:
-                patterns.append(f"Low glucose during {name} period")
+                # Consistent/persistent hypoglycemia
+                patterns.append(f"Consistent hypoglycemia during {name} period")
+
+            elif np.min(period_p10) < SEVERE_HYPO_THRESHOLD:
+                # Sporadic, very dangerous hypoglycemia
+                patterns.append(
+                    f"Sporadic, very dangerous hypoglycemia during {name} period"
+                )
 
             # Check if p25 (lower IQR boundary) is below threshold
             elif np.min(period_p25) < HYPO_THRESHOLD:
-                patterns.append(f"Frequent low readings during {name} period")
-
-    # Specific overnight hypoglycemia risk
-    if "night" in sections and len(sections["night"]) > 0:
-        night_p10 = np.min(p10[sections["night"]])
-        night_p25 = np.min(p25[sections["night"]])
-
-        if night_p10 < SEVERE_HYPO_THRESHOLD:
-            patterns.append("Risk of severe overnight hypoglycemia")
-        elif night_p25 < HYPO_THRESHOLD:
-            patterns.append("Risk of overnight hypoglycemia")
+                # Recurring/intermittent hypoglycemia
+                patterns.append(f"Recurring hypoglycemia during {name} period")
 
     # ========================================================================
     # B. HYPERGLYCEMIA PATTERNS (Time Above Range)
