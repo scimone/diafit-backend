@@ -8,6 +8,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import Avg, Count, StdDev, Sum
 from django.utils import timezone
 
+from diafit_backend.models.sleep_entity import SleepSessionEntity, SleepType
 from summary.models import DailySummary, RollingSummary
 from summary.util.calculate_agp import (
     calculate_agp_from_cgm,
@@ -117,6 +118,82 @@ def create_rolling_summary(
                 avg_calories_per_day = (totals["calories"] or 0) / period_days
                 avg_meals_per_day = (totals["count"] or 0) / period_days
 
+                # Calculate sleep metrics for short periods
+                sleep_sessions = SleepSessionEntity.objects.filter(
+                    user=user,
+                    type=SleepType.SLEEP,
+                    end_time__range=(start_datetime, end_datetime),
+                )
+
+                daily_sleep_duration = None
+                daily_deep_sleep_duration = None
+                daily_rem_sleep_duration = None
+                avg_fall_asleep_time = None
+                avg_wake_up_time = None
+
+                if sleep_sessions.exists():
+                    # Calculate average sleep durations per session (in minutes)
+                    session_count = sleep_sessions.count()
+                    total_sleep = sum(
+                        s.total_duration_minutes or 0 for s in sleep_sessions
+                    )
+                    daily_sleep_duration = (
+                        total_sleep / session_count
+                    )  # Average minutes per session
+
+                    total_deep = sum(s.deep_sleep_minutes or 0 for s in sleep_sessions)
+                    daily_deep_sleep_duration = total_deep / session_count
+
+                    total_rem = sum(s.rem_sleep_minutes or 0 for s in sleep_sessions)
+                    daily_rem_sleep_duration = total_rem / session_count
+
+                    # Convert to user's local timezone before averaging
+                    import pytz
+
+                    user_tz = pytz.timezone(
+                        user.timezone
+                        if hasattr(user, "timezone") and user.timezone
+                        else "Europe/Berlin"
+                    )
+
+                    fall_asleep_times = [
+                        s.start_time.astimezone(user_tz).time() for s in sleep_sessions
+                    ]
+                    if fall_asleep_times:
+                        # Handle circular time (bedtime typically 20:00-03:00)
+                        # Convert times to minutes, treating times before 12:00 as next day
+                        minutes = []
+                        for t in fall_asleep_times:
+                            mins = t.hour * 60 + t.minute
+                            # If time is before noon, assume it's early morning (after midnight)
+                            # Add 24 hours to put it in the right position for averaging
+                            if mins < 720:  # Before 12:00
+                                mins += 1440  # Add 24 hours
+                            minutes.append(mins)
+
+                        avg_minutes = sum(minutes) // len(minutes)
+                        # Wrap back to 24-hour format
+                        avg_minutes = avg_minutes % 1440
+                        from datetime import time
+
+                        avg_fall_asleep_time = time(
+                            hour=avg_minutes // 60, minute=avg_minutes % 60
+                        )
+
+                    wake_up_times = [
+                        s.end_time.astimezone(user_tz).time() for s in sleep_sessions
+                    ]
+                    if wake_up_times:
+                        total_minutes = sum(
+                            t.hour * 60 + t.minute for t in wake_up_times
+                        )
+                        avg_minutes = total_minutes // len(wake_up_times)
+                        from datetime import time
+
+                        avg_wake_up_time = time(
+                            hour=avg_minutes // 60, minute=avg_minutes % 60
+                        )
+
                 # Calculate AGP for short periods
                 agp_data = calculate_agp_from_cgm(cgm_qs)
                 agp_summary_data = calculate_agp_summary(agp_data) if agp_data else None
@@ -126,9 +203,9 @@ def create_rolling_summary(
                 RollingSummary.objects.update_or_create(
                     user=user,
                     period_days=period_days,
+                    end_date=end_date_only,
                     defaults={
                         "start_date": start_date,
-                        "end_date": end_date_only,
                         "glucose_avg": round(glucose_avg),
                         "glucose_std": round(glucose_std),
                         "time_in_range": round(tir),
@@ -141,6 +218,11 @@ def create_rolling_summary(
                         "daily_total_proteins": round(avg_proteins_per_day, 1),
                         "daily_total_fats": round(avg_fats_per_day, 1),
                         "daily_total_calories": round(avg_calories_per_day),
+                        "daily_sleep_duration": daily_sleep_duration,
+                        "daily_deep_sleep_duration": daily_deep_sleep_duration,
+                        "daily_rem_sleep_duration": daily_rem_sleep_duration,
+                        "avg_fall_asleep_time": avg_fall_asleep_time,
+                        "avg_wake_up_time": avg_wake_up_time,
                         "agp": agp_data,
                         "agp_summary": agp_summary_data,
                         "agp_trends": agp_patterns,
@@ -176,7 +258,7 @@ def create_rolling_summary(
                     daily_total_calories=Avg("daily_total_calories"),  # Average per day
                 )
 
-                # Calculate AGP from CGM data for longer periods
+                # Calculate sleep metrics for longer periods
                 start_datetime = datetime.combine(
                     start_date, datetime.min.time(), tzinfo=dt_timezone.utc
                 )
@@ -185,6 +267,83 @@ def create_rolling_summary(
                 )
                 if end_datetime > now:
                     end_datetime = now
+
+                sleep_sessions = SleepSessionEntity.objects.filter(
+                    user=user,
+                    type=SleepType.SLEEP,
+                    end_time__range=(start_datetime, end_datetime),
+                )
+
+                daily_sleep_duration = None
+                daily_deep_sleep_duration = None
+                daily_rem_sleep_duration = None
+                avg_fall_asleep_time = None
+                avg_wake_up_time = None
+
+                if sleep_sessions.exists():
+                    # Calculate average sleep durations per session (in minutes)
+                    session_count = sleep_sessions.count()
+                    total_sleep = sum(
+                        s.total_duration_minutes or 0 for s in sleep_sessions
+                    )
+                    daily_sleep_duration = (
+                        total_sleep / session_count
+                    )  # Average minutes per session
+
+                    total_deep = sum(s.deep_sleep_minutes or 0 for s in sleep_sessions)
+                    daily_deep_sleep_duration = total_deep / session_count
+
+                    total_rem = sum(s.rem_sleep_minutes or 0 for s in sleep_sessions)
+                    daily_rem_sleep_duration = total_rem / session_count
+
+                    # Convert to user's local timezone before averaging
+                    import pytz
+
+                    user_tz = pytz.timezone(
+                        user.timezone
+                        if hasattr(user, "timezone") and user.timezone
+                        else "Europe/Berlin"
+                    )
+
+                    fall_asleep_times = [
+                        s.start_time.astimezone(user_tz).time() for s in sleep_sessions
+                    ]
+                    if fall_asleep_times:
+                        # Handle circular time (bedtime typically 20:00-03:00)
+                        # Convert times to minutes, treating times before 12:00 as next day
+                        minutes = []
+                        for t in fall_asleep_times:
+                            mins = t.hour * 60 + t.minute
+                            # If time is before noon, assume it's early morning (after midnight)
+                            # Add 24 hours to put it in the right position for averaging
+                            if mins < 720:  # Before 12:00
+                                mins += 1440  # Add 24 hours
+                            minutes.append(mins)
+
+                        avg_minutes = sum(minutes) // len(minutes)
+                        # Wrap back to 24-hour format
+                        avg_minutes = avg_minutes % 1440
+                        from datetime import time
+
+                        avg_fall_asleep_time = time(
+                            hour=avg_minutes // 60, minute=avg_minutes % 60
+                        )
+
+                    wake_up_times = [
+                        s.end_time.astimezone(user_tz).time() for s in sleep_sessions
+                    ]
+                    if wake_up_times:
+                        total_minutes = sum(
+                            t.hour * 60 + t.minute for t in wake_up_times
+                        )
+                        avg_minutes = total_minutes // len(wake_up_times)
+                        from datetime import time
+
+                        avg_wake_up_time = time(
+                            hour=avg_minutes // 60, minute=avg_minutes % 60
+                        )
+
+                # Calculate AGP from CGM data for longer periods
                 cgm_data = user.cgmentity_set.filter(
                     timestamp__range=(start_datetime, end_datetime)
                 )
@@ -196,9 +355,9 @@ def create_rolling_summary(
                 RollingSummary.objects.update_or_create(
                     user=user,
                     period_days=period_days,
+                    end_date=end_date_only,
                     defaults={
                         "start_date": start_date,
-                        "end_date": end_date_only,
                         "glucose_avg": round(aggregated["glucose_avg"] or 0),
                         "glucose_std": round(aggregated["glucose_std"] or 0),
                         "time_in_range": round(aggregated["time_in_range"] or 0),
@@ -213,6 +372,11 @@ def create_rolling_summary(
                         "daily_total_proteins": aggregated["daily_total_proteins"] or 0,
                         "daily_total_fats": aggregated["daily_total_fats"] or 0,
                         "daily_total_calories": aggregated["daily_total_calories"] or 0,
+                        "daily_sleep_duration": daily_sleep_duration,
+                        "daily_deep_sleep_duration": daily_deep_sleep_duration,
+                        "daily_rem_sleep_duration": daily_rem_sleep_duration,
+                        "avg_fall_asleep_time": avg_fall_asleep_time,
+                        "avg_wake_up_time": avg_wake_up_time,
                         "agp": agp_data,
                         "agp_summary": agp_summary_data,
                         "agp_trends": agp_patterns,

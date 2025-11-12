@@ -11,9 +11,9 @@ class AggregatedSummary(BaseSummary):
     """
 
     # Sleep
-    daily_sleep_duration = models.FloatField(null=True, blank=True)
-    daily_deep_sleep_duration = models.FloatField(null=True, blank=True)
-    daily_rem_sleep_duration = models.FloatField(null=True, blank=True)
+    daily_sleep_duration = models.IntegerField(null=True, blank=True)
+    daily_deep_sleep_duration = models.IntegerField(null=True, blank=True)
+    daily_rem_sleep_duration = models.IntegerField(null=True, blank=True)
     avg_fall_asleep_time = models.TimeField(null=True, blank=True)
     avg_wake_up_time = models.TimeField(null=True, blank=True)
 

@@ -4,10 +4,12 @@ from datetime import date, datetime
 from datetime import timezone as dt_timezone
 from typing import Optional
 
+import pytz
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from django.utils import timezone
 
+from diafit_backend.models.sleep_entity import SleepSessionEntity, SleepType
 from summary.models import DailySummary, MonthlySummary
 from summary.util.calculate_agp import (
     calculate_agp_from_cgm,
@@ -77,13 +79,77 @@ def create_monthly_summary(
             daily_total_calories=Avg("daily_total_calories"),  # Average per day
         )
 
-        # Calculate AGP from CGM data for the month
+        # Calculate sleep metrics from sleep sessions for the month
         start_datetime = datetime.combine(
             month_start, datetime.min.time(), tzinfo=dt_timezone.utc
         )
         end_datetime = datetime.combine(
             month_end, datetime.max.time(), tzinfo=dt_timezone.utc
         )
+
+        sleep_sessions = SleepSessionEntity.objects.filter(
+            user=user,
+            type=SleepType.SLEEP,
+            start_time__range=(start_datetime, end_datetime),
+        )
+
+        daily_sleep_duration = None
+        daily_deep_sleep_duration = None
+        daily_rem_sleep_duration = None
+        avg_fall_asleep_time = None
+        avg_wake_up_time = None
+
+        if sleep_sessions.exists():
+            # Calculate average sleep durations per session (in minutes)
+            session_count = sleep_sessions.count()
+            total_sleep = sum(s.total_duration_minutes or 0 for s in sleep_sessions)
+            daily_sleep_duration = (
+                total_sleep / session_count
+            )  # Average minutes per session
+
+            total_deep = sum(s.deep_sleep_minutes or 0 for s in sleep_sessions)
+            daily_deep_sleep_duration = total_deep / session_count
+
+            total_rem = sum(s.rem_sleep_minutes or 0 for s in sleep_sessions)
+            daily_rem_sleep_duration = total_rem / session_count
+
+            # Calculate average fall asleep and wake up times (convert to user's local timezone)
+            user_tz = pytz.timezone(
+                user.timezone
+                if hasattr(user, "timezone") and user.timezone
+                else "Europe/Berlin"
+            )
+
+            fall_asleep_times = [
+                s.start_time.astimezone(user_tz).time() for s in sleep_sessions
+            ]
+            if fall_asleep_times:
+                # Handle circular time (bedtime typically 20:00-03:00)
+                minutes = []
+                for t in fall_asleep_times:
+                    mins = t.hour * 60 + t.minute
+                    if mins < 720:  # Before 12:00 - treat as next day
+                        mins += 1440
+                    minutes.append(mins)
+                avg_minutes = sum(minutes) // len(minutes)
+                avg_minutes = avg_minutes % 1440  # Wrap back to 24-hour format
+                from datetime import time
+
+                avg_fall_asleep_time = time(
+                    hour=avg_minutes // 60, minute=avg_minutes % 60
+                )
+
+            wake_up_times = [
+                s.end_time.astimezone(user_tz).time() for s in sleep_sessions
+            ]
+            if wake_up_times:
+                total_minutes = sum(t.hour * 60 + t.minute for t in wake_up_times)
+                avg_minutes = total_minutes // len(wake_up_times)
+                from datetime import time
+
+                avg_wake_up_time = time(hour=avg_minutes // 60, minute=avg_minutes % 60)
+
+        # Calculate AGP from CGM data for the month
         cgm_data = user.cgmentity_set.filter(
             timestamp__range=(start_datetime, end_datetime)
         )
@@ -111,6 +177,11 @@ def create_monthly_summary(
                 "agp": agp_data,
                 "agp_summary": agp_summary_data,
                 "agp_trends": agp_patterns,
+                "daily_sleep_duration": daily_sleep_duration,
+                "daily_deep_sleep_duration": daily_deep_sleep_duration,
+                "daily_rem_sleep_duration": daily_rem_sleep_duration,
+                "avg_fall_asleep_time": avg_fall_asleep_time,
+                "avg_wake_up_time": avg_wake_up_time,
             },
         )
 
