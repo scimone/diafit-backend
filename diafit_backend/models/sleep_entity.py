@@ -50,6 +50,7 @@ class SleepSessionEntity(models.Model):
     )
     source = models.CharField(max_length=100, default="Unknown")
     source_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
+    device = models.CharField(max_length=100, default="Unknown")
     total_duration_minutes = models.IntegerField(null=True, blank=True)
     deep_sleep_minutes = models.IntegerField(null=True, blank=True)
     light_sleep_minutes = models.IntegerField(null=True, blank=True)
