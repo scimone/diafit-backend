@@ -32,6 +32,7 @@ class SleepSessionInSchema(Schema):
     end_time: datetime
     source: str = "Unknown"
     source_id: Optional[str] = None
+    device: str = "Unknown"
     total_duration_minutes: Optional[int] = None
     deep_sleep_minutes: Optional[int] = None
     light_sleep_minutes: Optional[int] = None
@@ -50,6 +51,7 @@ class SleepSessionOutSchema(Schema):
     type: str
     source: str
     source_id: Optional[str]
+    device: str
     total_duration_minutes: Optional[int]
     deep_sleep_minutes: Optional[int]
     light_sleep_minutes: Optional[int]
