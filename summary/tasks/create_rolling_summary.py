@@ -1,5 +1,6 @@
 # summary/tasks/create_rolling_summary.py
 
+import logging
 from datetime import datetime, timedelta
 from datetime import timezone as dt_timezone
 from typing import List, Optional
@@ -15,6 +16,8 @@ from summary.util.calculate_agp import (
     calculate_agp_summary,
     detect_agp_patterns,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def create_rolling_summary(
@@ -39,12 +42,16 @@ def create_rolling_summary(
     if period_days_list is None:
         period_days_list = [1, 3, 7, 14, 30, 90]
 
+    # Ensure end_date is set to the start of the current day for consistency
     if end_date is None:
-        end_date = now
+        end_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Convert to date for consistency with daily summaries
     end_date_only = end_date.date()
 
+    logger.info(
+        f"📊 Generating rolling summaries for periods {period_days_list} ending {end_date_only}"
+    )
     print(
         f"📊 Generating rolling summaries for periods {period_days_list} ending {end_date_only}"
     )
@@ -195,16 +202,48 @@ def create_rolling_summary(
                         )
 
                 # Calculate AGP for short periods
-                agp_data = calculate_agp_from_cgm(cgm_qs)
-                agp_summary_data = calculate_agp_summary(agp_data) if agp_data else None
-                agp_patterns = detect_agp_patterns(agp_data) if agp_data else None
+                try:
+                    logger.info(
+                        f"Calculating AGP for {user.username} ({period_days}d) with {cgm_qs.count()} CGM readings"
+                    )
+                    # Force queryset evaluation before passing to AGP functions
+                    cgm_list = list(cgm_qs.values("timestamp", "value_mgdl"))
+                    logger.info(f"CGM data retrieved: {len(cgm_list)} readings")
+
+                    agp_data = calculate_agp_from_cgm(cgm_qs)
+                    logger.info(
+                        f"AGP data type: {type(agp_data)}, value: {agp_data is not None}"
+                    )
+
+                    agp_summary_data = (
+                        calculate_agp_summary(agp_data) if agp_data else None
+                    )
+                    agp_patterns = detect_agp_patterns(agp_data) if agp_data else None
+
+                    logger.info(
+                        f"✅ AGP calculated for {user.username} ({period_days}d): data={bool(agp_data)}, summary={bool(agp_summary_data)}, patterns={bool(agp_patterns)}"
+                    )
+                    print(
+                        f"  ℹ️  AGP calculated for {user.username} ({period_days}d): {bool(agp_data)}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"⚠️  AGP calculation failed for {user.username} ({period_days}d): {e}",
+                        exc_info=True,
+                    )
+                    print(
+                        f"  ⚠️  AGP calculation failed for {user.username} ({period_days}d): {e}"
+                    )
+                    agp_data = None
+                    agp_summary_data = None
+                    agp_patterns = None
 
                 # Create rolling summary with raw data
                 RollingSummary.objects.update_or_create(
                     user=user,
                     period_days=period_days,
-                    end_date=end_date_only,
                     defaults={
+                        "end_date": end_date_only,
                         "start_date": start_date,
                         "glucose_avg": round(glucose_avg),
                         "glucose_std": round(glucose_std),
@@ -344,19 +383,48 @@ def create_rolling_summary(
                         )
 
                 # Calculate AGP from CGM data for longer periods
-                cgm_data = user.cgmentity_set.filter(
-                    timestamp__range=(start_datetime, end_datetime)
-                )
-                agp_data = calculate_agp_from_cgm(cgm_data)
-                agp_summary_data = calculate_agp_summary(agp_data) if agp_data else None
-                agp_patterns = detect_agp_patterns(agp_data) if agp_data else None
+                try:
+                    cgm_data = user.cgmentity_set.filter(
+                        timestamp__range=(start_datetime, end_datetime)
+                    )
+                    cgm_count = cgm_data.count()
+                    logger.info(
+                        f"Calculating AGP for {user.username} ({period_days}d) with {cgm_count} CGM readings"
+                    )
+                    print(
+                        f"  ℹ️  Calculating AGP for {user.username} ({period_days}d) with {cgm_count} CGM readings"
+                    )
+
+                    agp_data = calculate_agp_from_cgm(cgm_data)
+                    agp_summary_data = (
+                        calculate_agp_summary(agp_data) if agp_data else None
+                    )
+                    agp_patterns = detect_agp_patterns(agp_data) if agp_data else None
+
+                    logger.info(
+                        f"✅ AGP calculated for {user.username} ({period_days}d): data={bool(agp_data)}, summary={bool(agp_summary_data)}, patterns={bool(agp_patterns)}"
+                    )
+                    print(
+                        f"  ℹ️  AGP calculated for {user.username} ({period_days}d): {bool(agp_data)}"
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"⚠️  AGP calculation failed for {user.username} ({period_days}d): {e}",
+                        exc_info=True,
+                    )
+                    print(
+                        f"  ⚠️  AGP calculation failed for {user.username} ({period_days}d): {e}"
+                    )
+                    agp_data = None
+                    agp_summary_data = None
+                    agp_patterns = None
 
                 # Create rolling summary with aggregated data
                 RollingSummary.objects.update_or_create(
                     user=user,
                     period_days=period_days,
-                    end_date=end_date_only,
                     defaults={
+                        "end_date": end_date_only,
                         "start_date": start_date,
                         "glucose_avg": round(aggregated["glucose_avg"] or 0),
                         "glucose_std": round(aggregated["glucose_std"] or 0),
@@ -388,4 +456,5 @@ def create_rolling_summary(
                 f"✅ Rolling {period_days}d summary for {user.username} ({start_date} to {end_date_only}) created/updated."
             )
 
+    logger.info("🏁 Rolling summary task completed.")
     print("🏁 Rolling summary task completed.")
