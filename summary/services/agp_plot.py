@@ -1,10 +1,13 @@
+# summary/services/agp_plot.py
 import json
 
 import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 
+from diafit_backend.config.colors import COLOR_SCHEMES
 
-def create_agp_plotly_graph(agp_data):
+
+def create_agp_plotly_graph(agp_data: dict) -> str:
     """Generate a Plotly AGP chart and return JSON for embedding."""
     time_labels = agp_data.get("time", [])
     p10 = agp_data.get("p10", [])
@@ -16,30 +19,41 @@ def create_agp_plotly_graph(agp_data):
     x_values = list(range(len(time_labels)))
     fig = go.Figure()
 
-    # 90th percentile band
-    fig.add_trace(
-        go.Scatter(
-            x=x_values,
-            y=p90,
-            mode="lines",
-            line=dict(color="rgba(153, 102, 255, 0.8)", width=2),
-            name="90th Percentile",
-            showlegend=False,
+    # Target range bounds
+    TARGET_RANGE = (70, 180)
+    target_lower, target_upper = TARGET_RANGE
+
+    # Helper to clip values to target range
+    def clip_to_range(values, lower, upper):
+        return [max(lower, min(upper, v)) for v in values]
+
+    # Helper to add percentile fill area
+    def add_percentile_fill(fig, x, y_upper, y_lower, color):
+        fig.add_trace(
+            go.Scatter(
+                x=x + x[::-1],
+                y=y_upper + y_lower[::-1],
+                mode="lines",
+                fill="toself",
+                fillcolor=color,
+                line=dict(color=color),
+                hoverinfo="skip",
+                showlegend=False,
+            )
         )
+
+    # 10-90th percentile in range (light green)
+    p10_in_range = clip_to_range(p10, target_lower, target_upper)
+    p90_in_range = clip_to_range(p90, target_lower, target_upper)
+    add_percentile_fill(
+        fig, x_values, p90_in_range, p10_in_range, COLOR_SCHEMES["agp"]["in_range_90th"]
     )
 
-    # 75th percentile band
-    fig.add_trace(
-        go.Scatter(
-            x=x_values,
-            y=p75,
-            mode="lines",
-            line=dict(color="rgba(153, 102, 255, 0.8)", width=2),
-            fill="tonexty",
-            fillcolor="rgba(153, 102, 255, 0.2)",
-            name="75th-90th Percentile",
-            showlegend=False,
-        )
+    # 25-75th percentile in range (dark green)
+    p25_in_range = clip_to_range(p25, target_lower, target_upper)
+    p75_in_range = clip_to_range(p75, target_lower, target_upper)
+    add_percentile_fill(
+        fig, x_values, p75_in_range, p25_in_range, COLOR_SCHEMES["agp"]["in_range_75th"]
     )
 
     # Median
@@ -48,67 +62,59 @@ def create_agp_plotly_graph(agp_data):
             x=x_values,
             y=p50,
             mode="lines",
-            line=dict(color="rgba(75, 192, 192, 1)", width=3),
+            line=dict(color=COLOR_SCHEMES["agp"]["in_range_median"], width=3),
             name="Median (50th)",
             showlegend=False,
         )
     )
 
-    # IQR (25th-75th)
-    fig.add_trace(
-        go.Scatter(
-            x=x_values + x_values[::-1],
-            y=p75 + p25[::-1],
-            mode="lines",
-            fill="toself",
-            fillcolor="rgba(54, 162, 235, 0.3)",
-            line=dict(width=0),
-            showlegend=False,
-            name="25th-75th Percentile (IQR)",
-        )
+    # 25-75th percentile above range (dark purple)
+    p75_above = [max(v, target_upper) for v in p75]
+    add_percentile_fill(
+        fig,
+        x_values,
+        p75_above,
+        [target_upper] * len(x_values),
+        COLOR_SCHEMES["agp"]["above_range_75th"],
     )
 
-    # 25th percentile band
-    fig.add_trace(
-        go.Scatter(
-            x=x_values,
-            y=p25,
-            mode="lines",
-            line=dict(color="rgba(54, 162, 235, 0.8)", width=2),
-            name="25th Percentile",
-            showlegend=False,
-        )
+    # 25-75th percentile below range (dark red)
+    p25_below = [min(v, target_lower) for v in p25]
+    add_percentile_fill(
+        fig,
+        x_values,
+        [target_lower] * len(x_values),
+        p25_below,
+        COLOR_SCHEMES["agp"]["under_range_75th"],
     )
 
-    # 10th percentile band
-    fig.add_trace(
-        go.Scatter(
-            x=x_values,
-            y=p10,
-            mode="lines",
-            line=dict(color="rgba(153, 102, 255, 0.8)", width=2),
-            fill="tonexty",
-            fillcolor="rgba(153, 102, 255, 0.2)",
-            name="10th-25th Percentile",
-            showlegend=False,
-        )
+    # 10-90th percentile above range (light purple)
+    p90_above = [max(v, target_upper) for v in p90]
+    add_percentile_fill(
+        fig, x_values, p90_above, p75_above, COLOR_SCHEMES["agp"]["above_range_90th"]
+    )
+
+    # 10-90th percentile below range (light red)
+    p10_below = [min(v, target_lower) for v in p10]
+    add_percentile_fill(
+        fig, x_values, p25_below, p10_below, COLOR_SCHEMES["agp"]["under_range_90th"]
     )
 
     # Add reference lines
-    for y, color, label in [(70, "orange", "70"), (180, "red", "180")]:
+    for y, color, label in [(70, "grey", "70"), (180, "grey", "180")]:
         fig.add_hline(
             y=y,
-            line_dash="dash",
+            # line_dash="dash",
             line_color=color,
             annotation_text=label,
-            annotation_position="right",
+            annotation_position="left",
         )
 
     fig.update_layout(
         xaxis=dict(
             tickmode="array",
-            tickvals=x_values[::12],
-            ticktext=[time_labels[i] for i in range(0, len(time_labels), 12)],
+            tickvals=x_values[::24],
+            ticktext=[time_labels[i] for i in range(0, len(time_labels), 24)],
             gridcolor="#30363d",
             tickfont=dict(color="#8b949e"),
         ),

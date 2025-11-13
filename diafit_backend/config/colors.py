@@ -1,0 +1,13 @@
+# diafit_backend/config/colors.py
+
+COLOR_SCHEMES = {
+    "agp": {
+        "in_range_median": "rgba(67, 217, 152, 1)",
+        "in_range_75th": "rgba(67, 217, 152, 0.55)",
+        "in_range_90th": "rgba(67, 217, 152, 0.25)",
+        "above_range_75th": "rgba(168, 130, 255, 0.45)",
+        "above_range_90th": "rgba(168, 130, 255, 0.25)",
+        "under_range_75th": "rgba(255, 105, 97, 0.55)",
+        "under_range_90th": "rgba(255, 105, 97, 0.25)",
+    }
+}

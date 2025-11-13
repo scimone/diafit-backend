@@ -1,3 +1,4 @@
+# summary/views/agp_views.py
 from django.shortcuts import render
 
 from summary.services import create_agp_plotly_graph, get_agp_summary
