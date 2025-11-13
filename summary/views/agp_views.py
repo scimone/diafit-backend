@@ -1,11 +1,18 @@
 # summary/views/agp_views.py
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
 from django.shortcuts import render
 
 from summary.services import create_agp_plotly_graph, get_agp_summary
 
 
+@login_required
 def agp_visualization(request):
     user = request.user
+
+    if not user.is_authenticated:
+        return HttpResponseForbidden("You must be logged in to access this resource.")
+
     period_days = int(request.GET.get("period_days", 14))
 
     summary = get_agp_summary(user, period_days)
