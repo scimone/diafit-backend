@@ -93,12 +93,148 @@
             </div>
 
             <div class="right-column">
-                <!-- Right column content goes here -->
+                <h3 style="color: #f0f6fc; margin-top: 0;">Detected Patterns</h3>
+                
+                {% if agp_patterns %}
+                <div class="patterns-list">
+                    {% for pattern in agp_patterns %}
+                    <div class="pattern-item" data-pattern="{{ pattern }}">
+                        <span class="pattern-icon">📊</span>
+                        <span class="pattern-text">{{ pattern }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color: #8b949e; font-size: 14px;">No patterns detected for this period.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 
     <script>
+        // Pattern to time mapping (hours) - matching calculate_agp.py TIME_PERIODS
+        const patternTimeRanges = {
+            'night': [22, 7],
+            'morning': [7, 11],
+            'noon': [11, 15],
+            'lunch': [11, 15],
+            'afternoon': [15, 18],
+            'evening': [18, 22],
+            'dinner': [18, 22],
+            'breakfast': [7, 10],
+            'dawn': [3, 7],
+            'fasting': [5, 7],
+            'overnight': [22, 7]
+        };
+
+        // Add click handlers to pattern items
+        document.querySelectorAll('.pattern-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const pattern = this.dataset.pattern.toLowerCase();
+                
+                // Remove active class from all items
+                document.querySelectorAll('.pattern-item').forEach(i => i.classList.remove('active'));
+                
+                // Add active class to clicked item
+                this.classList.add('active');
+                
+                // Find time range based on pattern keywords (check longer matches first)
+                let timeRange = null;
+                
+                // Check specific keywords in priority order (longer/more specific first)
+                if (pattern.includes('afternoon')) {
+                    timeRange = patternTimeRanges['afternoon'];
+                } else if (pattern.includes('breakfast')) {
+                    timeRange = patternTimeRanges['breakfast'];
+                } else if (pattern.includes('lunch')) {
+                    timeRange = patternTimeRanges['lunch'];
+                } else if (pattern.includes('dinner')) {
+                    timeRange = patternTimeRanges['dinner'];
+                } else if (pattern.includes('morning')) {
+                    timeRange = patternTimeRanges['morning'];
+                } else if (pattern.includes('evening')) {
+                    timeRange = patternTimeRanges['evening'];
+                } else if (pattern.includes('noon')) {
+                    timeRange = patternTimeRanges['noon'];
+                } else if (pattern.includes('night') || pattern.includes('overnight')) {
+                    timeRange = patternTimeRanges['night'];
+                } else if (pattern.includes('dawn')) {
+                    timeRange = patternTimeRanges['dawn'];
+                } else if (pattern.includes('fasting')) {
+                    timeRange = patternTimeRanges['fasting'];
+                }
+                
+                if (timeRange) {
+                    highlightTimeRange(timeRange[0], timeRange[1]);
+                } else {
+                    // Reset highlight if no specific range found
+                    resetHighlight();
+                }
+            });
+        });
+
+        function highlightTimeRange(startHour, endHour) {
+            // Calculate x-axis range (assuming 288 points per day, 12 per hour)
+            const pointsPerHour = 12;
+            const startIdx = startHour * pointsPerHour;
+            let endIdx = endHour * pointsPerHour;
+            
+            // Handle wraparound (e.g., night 22-7)
+            if (startHour > endHour) {
+                // Create two rectangles: one for late night, one for early morning
+                Plotly.relayout('agpChart', {
+                    shapes: [
+                        {
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: startIdx,
+                            y0: 0,
+                            x1: 24 * pointsPerHour,  // Until end of day
+                            y1: 1,
+                            fillcolor: 'rgba(88, 166, 255, 0.15)',
+                            line: { width: 0 },
+                            layer: 'below'
+                        },
+                        {
+                            type: 'rect',
+                            xref: 'x',
+                            yref: 'paper',
+                            x0: 0,  // From start of day
+                            y0: 0,
+                            x1: endIdx,
+                            y1: 1,
+                            fillcolor: 'rgba(88, 166, 255, 0.15)',
+                            line: { width: 0 },
+                            layer: 'below'
+                        }
+                    ]
+                });
+            } else {
+                // Normal time range (no wraparound)
+                Plotly.relayout('agpChart', {
+                    shapes: [{
+                        type: 'rect',
+                        xref: 'x',
+                        yref: 'paper',
+                        x0: startIdx,
+                        y0: 0,
+                        x1: endIdx,
+                        y1: 1,
+                        fillcolor: 'rgba(88, 166, 255, 0.15)',
+                        line: { width: 0 },
+                        layer: 'below'
+                    }]
+                });
+            }
+        }
+
+        function resetHighlight() {
+            Plotly.relayout('agpChart', {
+                shapes: []
+            });
+        }
+
         function changePeriodDays() {
             const periodSelect = document.getElementById('periodSelect');
             const selectedPeriod = periodSelect.value;

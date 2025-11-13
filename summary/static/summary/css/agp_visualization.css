@@ -30,6 +30,72 @@ body {
     border-radius: 6px;
     padding: 20px;
     border: 1px solid #30363d;
+    max-height: 800px;
+    overflow-y: auto;
+}
+
+.patterns-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pattern-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background: #161b22;
+    border-radius: 6px;
+    border-left: 3px solid #58a6ff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pattern-item:hover {
+    background: #21262d;
+    border-left-color: #79c0ff;
+    transform: translateX(2px);
+}
+
+.pattern-item.active {
+    background: #1f3040;
+    border-left-color: #58a6ff;
+    box-shadow: 0 0 8px rgba(88, 166, 255, 0.3);
+}
+
+.pattern-icon {
+    font-size: 20px;
+    margin-right: 10px;
+}
+
+.pattern-text {
+    font-size: 14px;
+    color: #c9d1d9;
+    line-height: 1.4;
+}
+
+.right-column h3 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #30363d;
+}
+
+.right-column::-webkit-scrollbar {
+    width: 8px;
+}
+
+.right-column::-webkit-scrollbar-track {
+    background: #0d1117;
+    border-radius: 4px;
+}
+
+.right-column::-webkit-scrollbar-thumb {
+    background: #30363d;
+    border-radius: 4px;
+}
+
+.right-column::-webkit-scrollbar-thumb:hover {
+    background: #484f58;
 }
 
 .header {

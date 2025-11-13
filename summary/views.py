@@ -30,10 +30,13 @@ def agp_visualization(request):
     # Generate Plotly graph if summary exists
     plotly_graph = None
     error_message = None
+    agp_patterns = None
 
     if summary and summary.agp:
         try:
             plotly_graph = create_agp_plotly_graph(summary.agp)
+            # Get patterns from database (already calculated and stored)
+            agp_patterns = summary.agp_trends
         except Exception as e:
             error_message = f"Error creating graph: {str(e)}"
             print(error_message)
@@ -46,6 +49,7 @@ def agp_visualization(request):
         "error_message": error_message,
         "period_days": period_days,
         "available_periods": [7, 14, 30, 90],
+        "agp_patterns": agp_patterns,
     }
 
     return render(request, "summary/agp_visualization.html", context)
