@@ -1,7 +1,6 @@
 import json
 
 import plotly.graph_objects as go
-from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import render
 from plotly.utils import PlotlyJSONEncoder
@@ -9,7 +8,6 @@ from plotly.utils import PlotlyJSONEncoder
 from .models import RollingSummary
 
 
-@login_required
 def agp_visualization(request):
     """
     Render AGP visualization page with dropdown to select period_days and date from rolling summaries.
@@ -216,7 +214,6 @@ def create_agp_plotly_graph(agp_data):
     return graph_json
 
 
-@login_required
 def agp_data_api(request):
     """
     API endpoint to get AGP data as JSON for a specific date and period_days.
