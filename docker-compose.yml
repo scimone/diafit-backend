@@ -3,7 +3,7 @@ services:
     build: .
     container_name: diafit_backend
     restart: always
-    command: uv run manage.py collectstatic && uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000
+    command: uv run manage.py collectstatic --noinput && uv run gunicorn core.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
