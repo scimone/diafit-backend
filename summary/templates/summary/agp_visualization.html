@@ -48,25 +48,6 @@
                 {% endif %}
 
                 {% if summary %}
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Average Glucose</div>
-                        <div class="stat-value">{{ summary.glucose_avg }}<span class="stat-unit"> mg/dL</span></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color: #28a745;">
-                        <div class="stat-label">Time in Range</div>
-                        <div class="stat-value">{{ summary.time_in_range }}<span class="stat-unit">%</span></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color: #ffc107;">
-                        <div class="stat-label">Time Below Range</div>
-                        <div class="stat-value">{{ summary.time_below_range }}<span class="stat-unit">%</span></div>
-                    </div>
-                    <div class="stat-card" style="border-left-color: #dc3545;">
-                        <div class="stat-label">Time Above Range</div>
-                        <div class="stat-value">{{ summary.time_above_range }}<span class="stat-unit">%</span></div>
-                    </div>
-                </div>
-
                 <div class="chart-container">
                     <div id="agpChart"></div>
                 </div>

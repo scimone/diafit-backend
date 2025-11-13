@@ -181,14 +181,8 @@ def create_agp_plotly_graph(agp_data):
 
     # Update layout
     fig.update_layout(
-        title={
-            "text": "24-Hour Ambulatory Glucose Profile (AGP)",
-            "x": 0.5,
-            "xanchor": "center",
-            "font": {"size": 20, "color": "#f0f6fc"},
-        },
         xaxis=dict(
-            title=dict(text="Time of Day", font=dict(color="#8b949e")),
+            # title=dict(text="Time of Day", font=dict(color="#8b949e")),
             tickmode="array",
             tickvals=x_values[::12]
             if len(x_values) > 12
@@ -200,17 +194,18 @@ def create_agp_plotly_graph(agp_data):
             gridcolor="#30363d",
         ),
         yaxis=dict(
-            title=dict(text="Glucose (mg/dL)", font=dict(color="#8b949e")),
+            # title=dict(text="Glucose (mg/dL)", font=dict(color="#8b949e")),
             range=[0, 400],
             tickfont=dict(color="#8b949e"),
             gridcolor="#30363d",
         ),
         hovermode="x unified",
         template="plotly_dark",
-        paper_bgcolor="#161b22",
+        paper_bgcolor="#0d1117",
         plot_bgcolor="#0d1117",
-        height=600,
+        height=400,
         showlegend=False,
+        margin=dict(l=0, r=0, t=0, b=0),  # Reduce margins: left, right, top, bottom
     )
 
     # Convert to JSON for embedding
@@ -223,34 +218,19 @@ def agp_data_api(request):
     API endpoint to get AGP data as JSON for a specific date and period_days.
     """
     user = request.user
-    selected_date = request.GET.get("date")
     period_days = int(request.GET.get("period_days", 14))
 
-    if selected_date:
-        try:
-            summary = RollingSummary.objects.get(
-                user=user,
-                date=selected_date,
-                period_days=period_days,
-                agp__isnull=False,
-            )
-        except RollingSummary.DoesNotExist:
-            return JsonResponse(
-                {"error": "No data found for this date and period"}, status=404
-            )
-    else:
-        summary = (
-            RollingSummary.objects.filter(
-                user=user, period_days=period_days, agp__isnull=False
-            )
-            .order_by("-date")
-            .first()
+    summary = (
+        RollingSummary.objects.filter(
+            user=user, period_days=period_days, agp__isnull=False
         )
-        if not summary:
-            return JsonResponse({"error": "No AGP data available"}, status=404)
+        .order_by("-date")
+        .first()
+    )
+    if not summary:
+        return JsonResponse({"error": "No AGP data available"}, status=404)
 
     response_data = {
-        "date": summary.date,
         "period_days": summary.period_days,
         "agp": summary.agp or {},
         "agp_summary": summary.agp_summary,
