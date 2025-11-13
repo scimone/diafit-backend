@@ -11,10 +11,11 @@ from django.utils import timezone
 
 from diafit_backend.models.sleep_entity import SleepSessionEntity, SleepType
 from summary.models import DailySummary, WeeklySummary
-from summary.util.calculate_agp import (
+from summary.features.agp import (
     calculate_agp_from_cgm,
     calculate_agp_summary,
     detect_agp_patterns,
+    TIME_PERIODS,
 )
 
 
@@ -148,7 +149,9 @@ def create_weekly_summary(
             timestamp__range=(start_datetime, end_datetime)
         )
         agp_data = calculate_agp_from_cgm(cgm_data)
-        agp_summary_data = calculate_agp_summary(agp_data) if agp_data else None
+        agp_summary_data = (
+            calculate_agp_summary(agp_data, TIME_PERIODS) if agp_data else None
+        )
         agp_patterns = detect_agp_patterns(agp_data) if agp_data else None
 
         WeeklySummary.objects.update_or_create(
