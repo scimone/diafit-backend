@@ -1,234 +1,82 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGP Visualization</title>
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'summary/css/agp_visualization.css' %}">
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Ambulatory Glucose Profile (AGP)</h1>
-            
-            <div class="date-selector">
-                <label for="periodSelect">Period:</label>
-                <select id="periodSelect" onchange="changePeriodDays()">
-                    {% for period in available_periods %}
-                    <option value="{{ period }}" {% if period == period_days %}selected{% endif %}>
-                        {{ period }} days
-                    </option>
-                    {% endfor %}
-                </select>
-                
-                {% if available_dates %}
-                <label for="dateSelect" style="margin-left: 15px;">Date:</label>
-                <select id="dateSelect" onchange="changeDate()">
-                    {% for date in available_dates %}
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}AGP Visualization{% endblock %}
+
+{% block content %}
+<div class="header">
+    <h1>Ambulatory Glucose Profile (AGP)</h1>
+
+    <div class="date-selector">
+        <label for="periodSelect">Period:</label>
+        <select id="periodSelect" onchange="changePeriodDays()">
+            {% for period in available_periods %}
+                <option value="{{ period }}" {% if period == period_days %}selected{% endif %}>
+                    {{ period }} days
+                </option>
+            {% endfor %}
+        </select>
+
+        {% if available_dates %}
+            <label for="dateSelect" style="margin-left: 15px;">Date:</label>
+            <select id="dateSelect" onchange="changeDate()">
+                {% for date in available_dates %}
                     <option value="{{ date }}" {% if date == selected_date %}selected{% endif %}>
                         {{ date|date:"M d, Y" }}
                     </option>
-                    {% endfor %}
-                </select>
-                {% endif %}
+                {% endfor %}
+            </select>
+        {% endif %}
+    </div>
+</div>
+
+<div class="main-layout">
+    <div class="left-column">
+        {% if error_message %}
+            <div class="alert">
+                ⚠️ <strong>{{ error_message }}</strong>
+                <p class="hint-text">
+                    To generate rolling summaries with AGP data, ensure the daily summary task is running.
+                </p>
             </div>
-        </div>
-
-        <div class="main-layout">
-            <div class="left-column">
-                {% if error_message %}
-                <div class="alert">
-                    <strong>⚠️ {{ error_message }}</strong>
-                    <p style="margin-top: 10px; color: #666; font-size: 14px;">
-                        To generate rolling summaries with AGP data, ensure the daily summary task is running.
-                    </p>
-                </div>
-                {% endif %}
-
-                {% if summary %}
-                <div class="chart-container">
-                    <div id="agpChart"></div>
-                </div>
-
-                {% if plotly_graph %}
-                <script>
-                    try {
-                        var graphData = {{ plotly_graph|safe }};
-                        Plotly.newPlot('agpChart', graphData.data, graphData.layout, {responsive: true});
-                    } catch (error) {
-                        console.error('Error rendering Plotly graph:', error);
-                        document.getElementById('agpChart').innerHTML = '<div style="padding: 40px; text-align: center; color: #dc3545;"><strong>Error rendering graph:</strong><br>' + error.message + '</div>';
-                    }
-                </script>
-                {% else %}
-                <script>
-                    document.getElementById('agpChart').innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">No AGP graph data available for this period.</div>';
-                </script>
-                {% endif %}
-
-                {% else %}
-                <p style="padding: 20px; text-align: center; color: #666;">No AGP data available. Please ensure rolling summaries are calculated.</p>
-                {% endif %}
+        {% elif summary %}
+            <div class="chart-container">
+                <div id="agpChart"></div>
             </div>
 
-            <div class="right-column">
-                <h3 style="color: #f0f6fc; margin-top: 0;">Detected Patterns</h3>
-                
-                {% if agp_patterns %}
-                <div class="patterns-list">
-                    {% for pattern in agp_patterns %}
+            {% if plotly_graph %}
+                <script id="plotly-data" type="application/json">
+                    {{ plotly_graph|safe }}
+                </script>
+            {% else %}
+                <div class="no-data-message">
+                    No AGP graph data available for this period.
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="no-data-message">
+                No AGP data available. Please ensure rolling summaries are calculated.
+            </p>
+        {% endif %}
+    </div>
+
+    <div class="right-column">
+        <h3>Detected Patterns</h3>
+        {% if agp_patterns %}
+            <div class="patterns-list">
+                {% for pattern in agp_patterns %}
                     <div class="pattern-item" data-pattern="{{ pattern }}">
                         <span class="pattern-icon">📊</span>
                         <span class="pattern-text">{{ pattern }}</span>
                     </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <p style="color: #8b949e; font-size: 14px;">No patterns detected for this period.</p>
-                {% endif %}
+                {% endfor %}
             </div>
-        </div>
+        {% else %}
+            <p class="no-patterns">No patterns detected for this period.</p>
+        {% endif %}
     </div>
+</div>
+{% endblock %}
 
-    <script>
-        // Pattern to time mapping (hours) - matching calculate_agp.py TIME_PERIODS
-        const patternTimeRanges = {
-            'night': [22, 7],
-            'morning': [7, 11],
-            'noon': [11, 15],
-            'lunch': [11, 15],
-            'afternoon': [15, 18],
-            'evening': [18, 22],
-            'dinner': [18, 22],
-            'breakfast': [7, 10],
-            'dawn': [3, 7],
-            'fasting': [5, 7],
-            'overnight': [22, 7]
-        };
-
-        // Add click handlers to pattern items
-        document.querySelectorAll('.pattern-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const pattern = this.dataset.pattern.toLowerCase();
-                
-                // Remove active class from all items
-                document.querySelectorAll('.pattern-item').forEach(i => i.classList.remove('active'));
-                
-                // Add active class to clicked item
-                this.classList.add('active');
-                
-                // Find time range based on pattern keywords (check longer matches first)
-                let timeRange = null;
-                
-                // Check specific keywords in priority order (longer/more specific first)
-                if (pattern.includes('afternoon')) {
-                    timeRange = patternTimeRanges['afternoon'];
-                } else if (pattern.includes('breakfast')) {
-                    timeRange = patternTimeRanges['breakfast'];
-                } else if (pattern.includes('lunch')) {
-                    timeRange = patternTimeRanges['lunch'];
-                } else if (pattern.includes('dinner')) {
-                    timeRange = patternTimeRanges['dinner'];
-                } else if (pattern.includes('morning')) {
-                    timeRange = patternTimeRanges['morning'];
-                } else if (pattern.includes('evening')) {
-                    timeRange = patternTimeRanges['evening'];
-                } else if (pattern.includes('noon')) {
-                    timeRange = patternTimeRanges['noon'];
-                } else if (pattern.includes('night') || pattern.includes('overnight')) {
-                    timeRange = patternTimeRanges['night'];
-                } else if (pattern.includes('dawn')) {
-                    timeRange = patternTimeRanges['dawn'];
-                } else if (pattern.includes('fasting')) {
-                    timeRange = patternTimeRanges['fasting'];
-                }
-                
-                if (timeRange) {
-                    highlightTimeRange(timeRange[0], timeRange[1]);
-                } else {
-                    // Reset highlight if no specific range found
-                    resetHighlight();
-                }
-            });
-        });
-
-        function highlightTimeRange(startHour, endHour) {
-            // Calculate x-axis range (assuming 288 points per day, 12 per hour)
-            const pointsPerHour = 12;
-            const startIdx = startHour * pointsPerHour;
-            let endIdx = endHour * pointsPerHour;
-            
-            // Handle wraparound (e.g., night 22-7)
-            if (startHour > endHour) {
-                // Create two rectangles: one for late night, one for early morning
-                Plotly.relayout('agpChart', {
-                    shapes: [
-                        {
-                            type: 'rect',
-                            xref: 'x',
-                            yref: 'paper',
-                            x0: startIdx,
-                            y0: 0,
-                            x1: 24 * pointsPerHour,  // Until end of day
-                            y1: 1,
-                            fillcolor: 'rgba(88, 166, 255, 0.15)',
-                            line: { width: 0 },
-                            layer: 'below'
-                        },
-                        {
-                            type: 'rect',
-                            xref: 'x',
-                            yref: 'paper',
-                            x0: 0,  // From start of day
-                            y0: 0,
-                            x1: endIdx,
-                            y1: 1,
-                            fillcolor: 'rgba(88, 166, 255, 0.15)',
-                            line: { width: 0 },
-                            layer: 'below'
-                        }
-                    ]
-                });
-            } else {
-                // Normal time range (no wraparound)
-                Plotly.relayout('agpChart', {
-                    shapes: [{
-                        type: 'rect',
-                        xref: 'x',
-                        yref: 'paper',
-                        x0: startIdx,
-                        y0: 0,
-                        x1: endIdx,
-                        y1: 1,
-                        fillcolor: 'rgba(88, 166, 255, 0.15)',
-                        line: { width: 0 },
-                        layer: 'below'
-                    }]
-                });
-            }
-        }
-
-        function resetHighlight() {
-            Plotly.relayout('agpChart', {
-                shapes: []
-            });
-        }
-
-        function changePeriodDays() {
-            const periodSelect = document.getElementById('periodSelect');
-            const selectedPeriod = periodSelect.value;
-            window.location.href = '?period_days=' + selectedPeriod;
-        }
-        
-        function changeDate() {
-            const periodSelect = document.getElementById('periodSelect');
-            const dateSelect = document.getElementById('dateSelect');
-            const selectedPeriod = periodSelect.value;
-            const selectedDate = dateSelect.value;
-            window.location.href = '?period_days=' + selectedPeriod + '&date=' + selectedDate;
-        }
-    </script>
-</body>
-</html>
+{% block scripts %}
+<script src="{% static 'summary/js/agp_visualization.js' %}"></script>
+{% endblock %}
