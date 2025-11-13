@@ -90,22 +90,22 @@ def create_agp_plotly_graph(agp_data):
             y=percentile_90,
             name="90th Percentile",
             mode="lines",
-            line=dict(color="rgba(255, 99, 132, 0.8)", width=2),
-            showlegend=True,
+            line=dict(color="rgba(153, 102, 255, 0.8)", width=2),
+            showlegend=False,
         )
     )
 
-    # 75th-90th percentile range (fill)
+    # 75th-90th percentile range (fill) - outer area
     fig.add_trace(
         go.Scatter(
             x=x_values,
             y=percentile_75,
             name="75th-90th Percentile",
             mode="lines",
-            line=dict(color="rgba(255, 159, 64, 0.8)", width=2),
+            line=dict(color="rgba(153, 102, 255, 0.8)", width=2),
             fill="tonexty",
-            fillcolor="rgba(255, 159, 64, 0.2)",
-            showlegend=True,
+            fillcolor="rgba(153, 102, 255, 0.2)",
+            showlegend=False,
         )
     )
 
@@ -117,11 +117,11 @@ def create_agp_plotly_graph(agp_data):
             name="Median (50th)",
             mode="lines",
             line=dict(color="rgba(75, 192, 192, 1)", width=3),
-            showlegend=True,
+            showlegend=False,
         )
     )
 
-    # 25th-75th percentile range (IQR - fill)
+    # 25th-75th percentile range (IQR - fill) - inner area
     fig.add_trace(
         go.Scatter(
             x=x_values + x_values[::-1],
@@ -131,7 +131,7 @@ def create_agp_plotly_graph(agp_data):
             line=dict(color="rgba(54, 162, 235, 0)", width=0),
             fill="toself",
             fillcolor="rgba(54, 162, 235, 0.3)",
-            showlegend=True,
+            showlegend=False,
         )
     )
 
@@ -143,11 +143,11 @@ def create_agp_plotly_graph(agp_data):
             name="25th Percentile",
             mode="lines",
             line=dict(color="rgba(54, 162, 235, 0.8)", width=2),
-            showlegend=True,
+            showlegend=False,
         )
     )
 
-    # 10th-25th percentile range (fill)
+    # 10th-25th percentile range (fill) - outer area
     fig.add_trace(
         go.Scatter(
             x=x_values,
@@ -157,7 +157,7 @@ def create_agp_plotly_graph(agp_data):
             line=dict(color="rgba(153, 102, 255, 0.8)", width=2),
             fill="tonexty",
             fillcolor="rgba(153, 102, 255, 0.2)",
-            showlegend=True,
+            showlegend=False,
         )
     )
 
@@ -166,14 +166,14 @@ def create_agp_plotly_graph(agp_data):
         y=70,
         line_dash="dash",
         line_color="orange",
-        annotation_text="Low threshold (70 mg/dL)",
+        annotation_text="70",
         annotation_position="right",
     )
     fig.add_hline(
         y=180,
         line_dash="dash",
         line_color="red",
-        annotation_text="High threshold (180 mg/dL)",
+        annotation_text="180",
         annotation_position="right",
     )
 
@@ -183,10 +183,10 @@ def create_agp_plotly_graph(agp_data):
             "text": "24-Hour Ambulatory Glucose Profile (AGP)",
             "x": 0.5,
             "xanchor": "center",
-            "font": {"size": 20},
+            "font": {"size": 20, "color": "#f0f6fc"},
         },
         xaxis=dict(
-            title="Time of Day",
+            title=dict(text="Time of Day", font=dict(color="#8b949e")),
             tickmode="array",
             tickvals=x_values[::12]
             if len(x_values) > 12
@@ -194,17 +194,21 @@ def create_agp_plotly_graph(agp_data):
             ticktext=[time_labels[i] for i in range(0, len(time_labels), 12)]
             if len(time_labels) > 12
             else time_labels,
-            gridcolor="rgba(200, 200, 200, 0.3)",
+            tickfont=dict(color="#8b949e"),
+            gridcolor="#30363d",
         ),
         yaxis=dict(
-            title="Glucose (mg/dL)",
+            title=dict(text="Glucose (mg/dL)", font=dict(color="#8b949e")),
             range=[0, 400],
-            gridcolor="rgba(200, 200, 200, 0.3)",
+            tickfont=dict(color="#8b949e"),
+            gridcolor="#30363d",
         ),
         hovermode="x unified",
-        template="plotly_white",
+        template="plotly_dark",
+        paper_bgcolor="#161b22",
+        plot_bgcolor="#0d1117",
         height=600,
-        legend=dict(orientation="v", yanchor="top", y=0.99, xanchor="left", x=0.01),
+        showlegend=False,
     )
 
     # Convert to JSON for embedding
