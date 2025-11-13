@@ -7,4 +7,6 @@ RUN uv sync
 
 COPY . .
 
+RUN uv run manage.py collectstatic --noinput
+
 CMD ["gunicorn", "core.wsgi:application", "--bind", "0.0.0.0:8000"]
