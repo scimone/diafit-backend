@@ -10,13 +10,13 @@ from django.db.models import Avg, Count, StdDev, Sum
 from django.utils import timezone
 
 from diafit_backend.models.sleep_entity import SleepSessionEntity, SleepType
-from summary.models import DailySummary, RollingSummary
 from summary.features.agp import (
+    TIME_PERIODS,
     calculate_agp_from_cgm,
     calculate_agp_summary,
     detect_agp_patterns,
-    TIME_PERIODS,
 )
+from summary.models import DailySummary, RollingSummary
 
 logger = logging.getLogger(__name__)
 

@@ -13,10 +13,9 @@ Quick imports:
 """
 
 # Configuration
-from .config import DEFAULT_TIMEZONE, POINTS_PER_DAY, POINTS_PER_HOUR, TIME_PERIODS
-
 # Core calculations
 from .calculations import calculate_agp, calculate_agp_summary, calculate_stats
+from .config import DEFAULT_TIMEZONE, POINTS_PER_DAY, POINTS_PER_HOUR, TIME_PERIODS
 
 # Formatters
 from .formatters import calculate_agp_from_cgm, format_agp_json

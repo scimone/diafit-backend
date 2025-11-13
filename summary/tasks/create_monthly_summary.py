@@ -10,13 +10,13 @@ from django.db.models import Avg
 from django.utils import timezone
 
 from diafit_backend.models.sleep_entity import SleepSessionEntity, SleepType
-from summary.models import DailySummary, MonthlySummary
 from summary.features.agp import (
+    TIME_PERIODS,
     calculate_agp_from_cgm,
     calculate_agp_summary,
     detect_agp_patterns,
-    TIME_PERIODS,
 )
+from summary.models import DailySummary, MonthlySummary
 
 
 def create_monthly_summary(

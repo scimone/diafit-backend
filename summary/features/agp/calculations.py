@@ -30,8 +30,14 @@ def calculate_stats(logs, log_type, time_grouping="hour", user_timezone=None):
 
     # Determine timezone
     tz = (
-        pytz.timezone(user_timezone) if isinstance(user_timezone, str) else user_timezone
-    ) if user_timezone else DEFAULT_TIMEZONE
+        (
+            pytz.timezone(user_timezone)
+            if isinstance(user_timezone, str)
+            else user_timezone
+        )
+        if user_timezone
+        else DEFAULT_TIMEZONE
+    )
 
     # Determine the timestamp and value columns based on log_type
     if log_type == "cgm":
@@ -101,7 +107,11 @@ def calculate_stats(logs, log_type, time_grouping="hour", user_timezone=None):
 
 
 def calculate_agp(
-    logs, log_type="cgm", smoothed=True, points_per_day=POINTS_PER_DAY, user_timezone=None
+    logs,
+    log_type="cgm",
+    smoothed=True,
+    points_per_day=POINTS_PER_DAY,
+    user_timezone=None,
 ):
     """
     Calculate Ambulatory Glucose Profile (AGP) with specified number of points per day.

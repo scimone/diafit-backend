@@ -34,7 +34,7 @@ def agp_visualization(request):
         "plotly_graph": plotly_graph,
         "error_message": error_message,
         "period_days": period_days,
-        "available_periods": [7, 14, 30, 90],
+        "available_periods": [1, 3, 7, 14, 30, 90],
         "agp_patterns": agp_patterns,
     }
     return render(request, "summary/agp_visualization.html", context)
