@@ -36,7 +36,7 @@ def create_agp_plotly_graph(agp_data: dict) -> str:
                 mode="lines",
                 fill="toself",
                 fillcolor=color,
-                line=dict(color=color),
+                line=dict(color=color, width=0),
                 hoverinfo="skip",
                 showlegend=False,
             )
@@ -101,7 +101,10 @@ def create_agp_plotly_graph(agp_data: dict) -> str:
     )
 
     # Add reference lines
-    for y, color, label in [(70, "grey", "70"), (180, "grey", "180")]:
+    for y, color, label in [
+        (target_lower, "grey", "70"),
+        (target_upper, "grey", "180"),
+    ]:
         fig.add_hline(
             y=y,
             # line_dash="dash",
@@ -118,7 +121,7 @@ def create_agp_plotly_graph(agp_data: dict) -> str:
             gridcolor="#30363d",
             tickfont=dict(color="#8b949e"),
         ),
-        yaxis=dict(range=[0, 400], gridcolor="#30363d", tickfont=dict(color="#8b949e")),
+        yaxis=dict(range=[0, 300], gridcolor="#30363d", tickfont=dict(color="#8b949e")),
         hovermode="x unified",
         template="plotly_dark",
         paper_bgcolor="#0d1117",

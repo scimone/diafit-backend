@@ -66,13 +66,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 { type: 'rect', x0: 0, x1: endIdx }
               ].map(s => ({
                 ...s, xref: 'x', yref: 'paper', y0: 0, y1: 1,
-                fillcolor: 'rgba(88, 166, 255, 0.15)', line: { width: 0 }, layer: 'below'
+                fillcolor: 'rgba(13, 17, 23, 0.8)', line: { width: 0 }, layer: 'above'
               }))
-            : [{
-                type: 'rect', xref: 'x', yref: 'paper',
-                x0: startIdx, x1: endIdx, y0: 0, y1: 1,
-                fillcolor: 'rgba(88, 166, 255, 0.15)', line: { width: 0 }, layer: 'below'
-              }];
+            : [
+                { type: 'rect', x0: 0, x1: startIdx },
+                { type: 'rect', x0: endIdx, x1: 24 * pointsPerHour }
+              ].map(s => ({
+                ...s, xref: 'x', yref: 'paper', y0: 0, y1: 1,
+                fillcolor: 'rgba(13, 17, 23, 0.8)', line: { width: 0 }, layer: 'above'
+              }));
 
         Plotly.relayout('agpChart', { shapes });
     };
