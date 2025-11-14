@@ -4,7 +4,6 @@ from datetime import date, datetime
 from datetime import timezone as dt_timezone
 from typing import Optional
 
-import pytz
 from django.contrib.auth import get_user_model
 from django.db.models import Avg
 from django.utils import timezone
@@ -16,6 +15,7 @@ from summary.features.agp import (
     calculate_agp_summary,
     detect_agp_patterns,
 )
+from summary.features.statistics import calculate_sleep_stats
 from summary.models import DailySummary, QuarterlySummary
 
 
@@ -99,61 +99,26 @@ def create_quarterly_summary(
             start_time__range=(start_datetime, end_datetime),
         )
 
-        daily_sleep_duration = None
-        daily_deep_sleep_duration = None
-        daily_rem_sleep_duration = None
-        avg_fall_asleep_time = None
-        avg_wake_up_time = None
+        user_timezone = (
+            user.timezone
+            if hasattr(user, "timezone") and user.timezone
+            else "Europe/Berlin"
+        )
+        sleep_stats = calculate_sleep_stats(sleep_sessions, user_timezone)
 
-        if sleep_sessions.exists():
-            # Calculate average sleep durations per session (in minutes)
-            session_count = sleep_sessions.count()
-            total_sleep = sum(s.total_duration_minutes or 0 for s in sleep_sessions)
-            daily_sleep_duration = (
-                total_sleep / session_count
-            )  # Average minutes per session
-
-            total_deep = sum(s.deep_sleep_minutes or 0 for s in sleep_sessions)
-            daily_deep_sleep_duration = total_deep / session_count
-
-            total_rem = sum(s.rem_sleep_minutes or 0 for s in sleep_sessions)
-            daily_rem_sleep_duration = total_rem / session_count
-
-            # Calculate average fall asleep and wake up times (convert to user's local timezone)
-            user_tz = pytz.timezone(
-                user.timezone
-                if hasattr(user, "timezone") and user.timezone
-                else "Europe/Berlin"
-            )
-
-            fall_asleep_times = [
-                s.start_time.astimezone(user_tz).time() for s in sleep_sessions
-            ]
-            if fall_asleep_times:
-                # Handle circular time (bedtime typically 20:00-03:00)
-                minutes = []
-                for t in fall_asleep_times:
-                    mins = t.hour * 60 + t.minute
-                    if mins < 720:  # Before 12:00 - treat as next day
-                        mins += 1440
-                    minutes.append(mins)
-                avg_minutes = sum(minutes) // len(minutes)
-                avg_minutes = avg_minutes % 1440  # Wrap back to 24-hour format
-                from datetime import time
-
-                avg_fall_asleep_time = time(
-                    hour=avg_minutes // 60, minute=avg_minutes % 60
-                )
-
-            wake_up_times = [
-                s.end_time.astimezone(user_tz).time() for s in sleep_sessions
-            ]
-            if wake_up_times:
-                total_minutes = sum(t.hour * 60 + t.minute for t in wake_up_times)
-                avg_minutes = total_minutes // len(wake_up_times)
-                from datetime import time
-
-                avg_wake_up_time = time(hour=avg_minutes // 60, minute=avg_minutes % 60)
+        daily_sleep_duration = (
+            sleep_stats["daily_sleep_duration"] if sleep_stats else None
+        )
+        daily_deep_sleep_duration = (
+            sleep_stats["daily_deep_sleep_duration"] if sleep_stats else None
+        )
+        daily_rem_sleep_duration = (
+            sleep_stats["daily_rem_sleep_duration"] if sleep_stats else None
+        )
+        avg_fall_asleep_time = (
+            sleep_stats["avg_fall_asleep_time"] if sleep_stats else None
+        )
+        avg_wake_up_time = sleep_stats["avg_wake_up_time"] if sleep_stats else None
 
         # Calculate AGP from CGM data for the quarter
         cgm_data = user.cgmentity_set.filter(

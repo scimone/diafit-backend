@@ -5,11 +5,15 @@ from datetime import timezone as dt_timezone
 from typing import Optional
 
 from django.contrib.auth import get_user_model
-from django.db.models import Avg, Count, StdDev, Sum
 from django.utils import timezone
 
+from summary.features.statistics import (
+    calculate_bolus_stats,
+    calculate_cgm_coverage,
+    calculate_cgm_stats,
+    calculate_meal_stats,
+)
 from summary.models import DailySummary
-from summary.util.calculate_cgm_coverage import calculate_cgm_coverage
 
 
 def create_daily_summary(
@@ -61,54 +65,36 @@ def create_daily_summary(
         if not cgm_qs.exists():
             continue
 
-        glucose_avg = cgm_qs.aggregate(avg=Avg("value_mgdl"))["avg"] or 0
-        glucose_std = cgm_qs.aggregate(std=StdDev("value_mgdl"))["std"] or 0
+        cgm_stats = calculate_cgm_stats(cgm_qs)
+        if not cgm_stats:
+            continue
 
-        total = cgm_qs.count() or 1
-        tir = cgm_qs.filter(value_mgdl__range=(70, 180)).count() / total * 100
-        tbr = cgm_qs.filter(value_mgdl__lt=70).count() / total * 100
-        tar = cgm_qs.filter(value_mgdl__gt=180).count() / total * 100
-
-        # --- CGM coverage ---
-        timestamps = list(cgm_qs.values_list("timestamp", flat=True))
-        cgm_coverage = calculate_cgm_coverage(timestamps, start, end)
+        cgm_coverage = calculate_cgm_coverage(cgm_qs, start, end)
 
         # --- Bolus stats ---
         bolus_qs = user.bolusentity_set.filter(timestamp_utc__range=(start, end))
-        total_bolus = bolus_qs.aggregate(total=Sum("value"))["total"] or 0
+        bolus_stats = calculate_bolus_stats(bolus_qs, period_days=1)
 
         # --- Meal stats ---
         meal_qs = user.mealentity_set.filter(meal_time_utc__range=(start, end))
-        totals = meal_qs.aggregate(
-            carbs=Sum("carbohydrates"),
-            proteins=Sum("proteins"),
-            fats=Sum("fats"),
-            calories=Sum("calories"),
-            count=Count("id"),
-        )
-
-        total_carbs = totals["carbs"] or 0
-        total_proteins = totals["proteins"] or 0
-        total_fats = totals["fats"] or 0
-        total_calories = totals["calories"] or 0
-        total_meals = totals["count"] or 0
+        meal_stats = calculate_meal_stats(meal_qs, period_days=1)
 
         DailySummary.objects.update_or_create(
             user=user,
             date=summary_date,
             defaults={
-                "glucose_avg": round(glucose_avg),
-                "glucose_std": round(glucose_std),
-                "time_in_range": round(tir),
-                "time_below_range": round(tbr),
-                "time_above_range": round(tar),
+                "glucose_avg": cgm_stats["glucose_avg"],
+                "glucose_std": cgm_stats["glucose_std"],
+                "time_in_range": cgm_stats["time_in_range"],
+                "time_below_range": cgm_stats["time_below_range"],
+                "time_above_range": cgm_stats["time_above_range"],
                 "daily_cgm_coverage": round(cgm_coverage),
-                "daily_total_bolus": total_bolus,
-                "daily_total_meals": total_meals,
-                "daily_total_carbs": total_carbs,
-                "daily_total_proteins": total_proteins,
-                "daily_total_fats": total_fats,
-                "daily_total_calories": total_calories,
+                "daily_total_bolus": bolus_stats["total_bolus"],
+                "daily_total_meals": meal_stats["total_meals"],
+                "daily_total_carbs": meal_stats["total_carbs"],
+                "daily_total_proteins": meal_stats["total_proteins"],
+                "daily_total_fats": meal_stats["total_fats"],
+                "daily_total_calories": meal_stats["total_calories"],
             },
         )
 

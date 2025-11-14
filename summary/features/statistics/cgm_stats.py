@@ -1,29 +1,68 @@
-# summary/util/compute_cgm_coverage.py
+# summary/features/statistics/cgm_stats.py
 
 from datetime import datetime
 from statistics import median
-from typing import List, Optional
+from typing import Dict, Optional
+
+from django.db.models import Avg, QuerySet, StdDev
+
+
+def calculate_cgm_stats(cgm_queryset: QuerySet) -> Optional[Dict]:
+    """
+    Calculate glucose statistics from CGM data.
+
+    Args:
+        cgm_queryset: QuerySet of CGM entities
+
+    Returns:
+        Dict with glucose_avg, glucose_std, time_in_range, time_below_range, time_above_range
+        or None if no data
+    """
+    if not cgm_queryset.exists():
+        return None
+
+    glucose_avg = cgm_queryset.aggregate(avg=Avg("value_mgdl"))["avg"] or 0
+    glucose_std = cgm_queryset.aggregate(std=StdDev("value_mgdl"))["std"] or 0
+
+    total = cgm_queryset.count() or 1
+    tir = cgm_queryset.filter(value_mgdl__range=(70, 180)).count() / total * 100
+    tbr = cgm_queryset.filter(value_mgdl__lt=70).count() / total * 100
+    tar = cgm_queryset.filter(value_mgdl__gt=180).count() / total * 100
+
+    return {
+        "glucose_avg": round(glucose_avg),
+        "glucose_std": round(glucose_std),
+        "time_in_range": round(tir),
+        "time_below_range": round(tbr),
+        "time_above_range": round(tar),
+    }
 
 
 def calculate_cgm_coverage(
-    timestamps: List[datetime],
+    cgm_queryset: QuerySet,
     start: datetime,
     end: datetime,
     expected_interval_seconds: Optional[float] = None,
-    fallback_interval_seconds: float = 300.0,  # default 5 minutes if no inference possible
+    fallback_interval_seconds: float = 300.0,  # default 5 minutes
 ) -> float:
     """
-    Compute CGM coverage as percent of [start, end) covered by readings given by `timestamps`.
+    Calculate CGM coverage percentage for a time period.
 
-    - timestamps: list of timezone-aware datetimes (sorted or unsorted)
-    - start, end: timezone-aware datetimes delimiting the day/window
-    - expected_interval_seconds: optional known sampling interval in seconds. If None, inferred as median delta.
-    - Returns coverage_percent (0.0 - 100.0)
+    Each reading covers up to half the distance to previous and half to next,
+    but each half is capped by expected_interval_seconds/2. Edge readings use
+    the distance to start/end.
 
-    Approach:
-      Each reading covers up to half the distance to previous and half to next,
-      but each half is capped by expected_interval_seconds/2. Edge readings use the distance to start/end.
+    Args:
+        cgm_queryset: QuerySet of CGM entities
+        start: Start of time period
+        end: End of time period
+        expected_interval_seconds: Optional known sampling interval. If None, inferred as median delta.
+        fallback_interval_seconds: Default interval if no inference possible (default: 5 minutes)
+
+    Returns:
+        Coverage percentage (0-100)
     """
+    timestamps = list(cgm_queryset.values_list("timestamp", flat=True))
 
     if not timestamps:
         return 0.0
