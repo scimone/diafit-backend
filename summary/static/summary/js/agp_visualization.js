@@ -31,9 +31,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const patternRanges = {
         night: [22, 7],
         morning: [7, 11],
+        afternoon: [15, 18],
         noon: [11, 15],
         lunch: [11, 15],
-        afternoon: [15, 18],
         evening: [18, 22],
         dinner: [18, 22],
         breakfast: [7, 10],
@@ -62,8 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const shapes = startHour > endHour
             ? [
-                { type: 'rect', x0: startIdx, x1: 24 * pointsPerHour },
-                { type: 'rect', x0: 0, x1: endIdx }
+                { type: 'rect', x0: endIdx, x1: startIdx }
               ].map(s => ({
                 ...s, xref: 'x', yref: 'paper', y0: 0, y1: 1,
                 fillcolor: 'rgba(13, 17, 23, 0.8)', line: { width: 0 }, layer: 'above'
