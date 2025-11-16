@@ -2,9 +2,9 @@
 
 COLOR_SCHEMES = {
     "diafit": {
-        "in_range": "rgba(67, 217, 152, 1)",
-        "above_range": "rgba(168, 130, 255, 0.45)",
-        "under_range": "rgba(255, 105, 97, 0.55)",
+        "in_range": "rgba(80, 212, 154, 1)",
+        "above_range": "rgba(168, 130, 255, 1)",
+        "under_range": "rgba(255, 105, 97, 1)",
     },
     "agp": {
         "in_range_median": "rgba(67, 217, 152, 1)",

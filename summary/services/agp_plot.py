@@ -7,8 +7,13 @@ from plotly.utils import PlotlyJSONEncoder
 from diafit_backend.config.colors import COLOR_SCHEMES
 
 
-def create_agp_plotly_graph(agp_data: dict) -> str:
-    """Generate a Plotly AGP chart and return JSON for embedding."""
+def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
+    """Generate a Plotly AGP chart and return JSON for embedding.
+
+    Args:
+        agp_data: Dictionary containing AGP percentile data
+        today_cgm: Optional list of dicts with 'hour' and 'value' for today's CGM readings
+    """
     time_labels = agp_data.get("time", [])
     p10 = agp_data.get("p10", [])
     p25 = agp_data.get("p25", [])
@@ -111,6 +116,42 @@ def create_agp_plotly_graph(agp_data: dict) -> str:
             line_color=color,
             annotation_text=label,
             annotation_position="left",
+        )
+
+    # Add today's CGM scatter points if available
+    if today_cgm:
+        # Convert hours to x-axis indices (assuming 12 points per hour)
+        points_per_hour = 12
+        today_x = [reading["hour"] * points_per_hour for reading in today_cgm]
+        today_y = [reading["value"] for reading in today_cgm]
+
+        # Assign colors based on target range
+        today_colors = []
+        for reading in today_cgm:
+            value = reading["value"]
+            if value < target_lower:
+                today_colors.append(COLOR_SCHEMES["diafit"]["under_range"])
+            elif value > target_upper:
+                today_colors.append(COLOR_SCHEMES["diafit"]["above_range"])
+            else:
+                today_colors.append(COLOR_SCHEMES["diafit"]["in_range"])
+
+        fig.add_trace(
+            go.Scatter(
+                x=today_x,
+                y=today_y,
+                mode="markers",
+                marker=dict(
+                    size=6,
+                    color=today_colors,
+                    opacity=1.0,
+                    line=dict(width=0.5, color="#0d1117"),
+                ),
+                name="Today's CGM",
+                hovertemplate="<b>Today</b><br>Time: %{customdata}<br>Glucose: %{y} mg/dL<extra></extra>",
+                customdata=[reading["timestamp"] for reading in today_cgm],
+                showlegend=False,
+            )
         )
 
     fig.update_layout(
