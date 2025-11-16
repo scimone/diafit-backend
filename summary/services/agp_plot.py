@@ -102,8 +102,8 @@ def create_agp_plotly_graph(agp_data: dict) -> str:
 
     # Add reference lines
     for y, color, label in [
-        (target_lower, "grey", "70"),
-        (target_upper, "grey", "180"),
+        (target_lower, COLOR_SCHEMES["diafit"]["under_range"], "70"),
+        (target_upper, COLOR_SCHEMES["diafit"]["above_range"], "180"),
     ]:
         fig.add_hline(
             y=y,
