@@ -169,7 +169,6 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
         template="plotly_dark",
         paper_bgcolor="#0d1117",
         plot_bgcolor="#0d1117",
-        height=400,
         margin=dict(l=2, r=0, t=0, b=0),
         showlegend=False,
         dragmode=False,

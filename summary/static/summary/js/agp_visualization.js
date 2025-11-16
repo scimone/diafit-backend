@@ -5,11 +5,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (plotlyDataEl && chartContainer) {
         try {
             const graphData = JSON.parse(plotlyDataEl.textContent);
-            const config = { 
-                ...graphData.config,
-                responsive: true 
-            };
-            Plotly.newPlot(chartContainer, graphData.data, graphData.layout, config);
+            function resizePlot() {
+                const width = chartContainer.offsetWidth;
+                const height = Math.max(200, Math.round(width / 1.7)); // 2:1 aspect ratio
+                Plotly.newPlot(chartContainer, graphData.data, { ...graphData.layout, width, height }, { ...graphData.config, responsive: true });
+            }
+            resizePlot();
+            window.addEventListener('resize', resizePlot);
         } catch (error) {
             chartContainer.innerHTML = `
                 <div class="error-text">

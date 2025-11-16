@@ -29,6 +29,8 @@ body {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 30px;
+    height: auto;
+    min-height: 0;
 }
 
 .left-column,
@@ -36,17 +38,21 @@ body {
     background: #0d1117;
     border: 1px solid #30363d;
     border-radius: 6px;
-    padding: 20px;
     min-width: 0;
-    height: 600px;
-    max-height: 600px;
     overflow-y: auto; /* Make columns scrollable separately */
+    height: auto;
+    max-height: none;
+}
+
+.left-column {
+    padding: 0px 1px 10px 10px;
 }
 
 /* Right column fixed scroll behavior */
 .right-column {
     position: sticky;
     top: 20px;
+    padding: 20px;
 }
 
 /* Scrollbar styling */
@@ -104,8 +110,9 @@ h1 {
 
 /* === Chart === */
 .chart-container {
-    min-height: 400px;
     margin-top: 0;
+    height: auto;
+    min-height: 0;
 }
 
 .no-data-message {
@@ -236,7 +243,11 @@ code {
         grid-template-columns: 1fr;
         gap: 20px;
     }
-
+    .left-column {
+        height: auto;
+        max-height: none;
+        padding: 10px;
+    }
     .right-column {
         position: relative;
         top: 0;
