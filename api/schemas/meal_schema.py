@@ -5,7 +5,7 @@ from ninja import Schema
 
 
 class MealInSchema(Schema):
-    user_id: int
+    user_id: int = 1
     description: Optional[str] = None
     created_at_utc: datetime
     meal_time_utc: datetime
@@ -20,6 +20,25 @@ class MealInSchema(Schema):
     recommendation: Optional[str] = None
     reasoning: Optional[str] = None
     source: str = "Unknown"
+    source_id: Optional[str] = None
+
+
+class MealUpdateSchema(Schema):
+    user_id: Optional[int] = None
+    description: Optional[str] = None
+    created_at_utc: Optional[datetime] = None
+    meal_time_utc: Optional[datetime] = None
+    calories: Optional[int] = None
+    carbohydrates: Optional[int] = None
+    proteins: Optional[int] = None
+    fats: Optional[int] = None
+    impact_type: Optional[str] = None
+    meal_type: Optional[str] = None
+    is_valid: Optional[bool] = None
+    image_id: Optional[str] = None
+    recommendation: Optional[str] = None
+    reasoning: Optional[str] = None
+    source: Optional[str] = None
     source_id: Optional[str] = None
 
 

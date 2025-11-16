@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from ninja import Query, Router
 
-from api.schemas.meal_schema import MealInSchema, MealOutSchema
+from api.schemas.meal_schema import MealInSchema, MealOutSchema, MealUpdateSchema
 from diafit_backend.models import MealEntity
 
 router = Router(tags=["Meal"])
@@ -17,6 +17,20 @@ router = Router(tags=["Meal"])
 )
 def create_meal(request, payload: MealInSchema):
     meal = MealEntity(**payload.dict())
+    meal.save()
+    return meal
+
+
+@router.put(
+    path="/update/{meal_id}",
+    response=MealOutSchema,
+    summary="Update Meal Entry",
+    description="Update an existing meal entry with the provided fields.",
+)
+def update_meal(request, meal_id: int, payload: MealUpdateSchema):
+    meal = MealEntity.objects.get(id=meal_id)
+    for attr, value in payload.dict(exclude_unset=True).items():
+        setattr(meal, attr, value)
     meal.save()
     return meal
 
