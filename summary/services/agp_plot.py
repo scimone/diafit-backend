@@ -146,7 +146,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
                     size=6,
                     color=today_colors,
                     opacity=1.0,
-                    line=dict(width=0.3, color="#0d1117"),
+                    # line=dict(width=0.3, color="#0d1117"),
                 ),
                 name="Today's CGM",
                 customdata=[reading["timestamp"] for reading in today_cgm],
