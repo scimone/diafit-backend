@@ -70,6 +70,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
             line=dict(color=COLOR_SCHEMES["agp"]["in_range_median"], width=3),
             name="Median (50th)",
             showlegend=False,
+            hoverinfo="skip",
         )
     )
 
@@ -148,9 +149,9 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
                     line=dict(width=0.5, color="#0d1117"),
                 ),
                 name="Today's CGM",
-                hovertemplate="<b>Today</b><br>Time: %{customdata}<br>Glucose: %{y} mg/dL<extra></extra>",
                 customdata=[reading["timestamp"] for reading in today_cgm],
                 showlegend=False,
+                hoverinfo="skip",
             )
         )
 
@@ -163,12 +164,25 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
             tickfont=dict(color="#8b949e"),
         ),
         yaxis=dict(range=[0, 300], gridcolor="#30363d", tickfont=dict(color="#8b949e")),
-        hovermode="x unified",
+        hovermode=False,
         template="plotly_dark",
         paper_bgcolor="#0d1117",
         plot_bgcolor="#0d1117",
         height=400,
         margin=dict(l=0, r=0, t=0, b=0),
+        showlegend=False,
+        dragmode=False,
     )
 
-    return json.dumps(fig, cls=PlotlyJSONEncoder)
+    # Configure to remove all interactive elements
+    config = {
+        "displayModeBar": False,
+        "staticPlot": False,
+        "editable": False,
+        "displaylogo": False,
+    }
+
+    return json.dumps(
+        {"data": fig.data, "layout": fig.layout, "config": config},
+        cls=PlotlyJSONEncoder,
+    )
