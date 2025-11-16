@@ -108,8 +108,8 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
 
     # Add reference lines
     for y, color, label in [
-        (target_lower, COLOR_SCHEMES["diafit"]["under_range"], "70"),
-        (target_upper, COLOR_SCHEMES["diafit"]["above_range"], "180"),
+        (target_lower, COLOR_SCHEMES["agp"]["target_lower_line"], "70"),
+        (target_upper, COLOR_SCHEMES["agp"]["target_upper_line"], "180"),
     ]:
         fig.add_hline(
             y=y,
@@ -146,7 +146,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
                     size=6,
                     color=today_colors,
                     opacity=1.0,
-                    line=dict(width=0.5, color="#0d1117"),
+                    line=dict(width=0.3, color="#0d1117"),
                 ),
                 name="Today's CGM",
                 customdata=[reading["timestamp"] for reading in today_cgm],
@@ -162,6 +162,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
             ticktext=[time_labels[i] for i in range(0, len(time_labels), 24)],
             gridcolor="#30363d",
             tickfont=dict(color="#8b949e"),
+            range=[0, len(x_values) - 1],
         ),
         yaxis=dict(range=[0, 300], gridcolor="#30363d", tickfont=dict(color="#8b949e")),
         hovermode=False,
@@ -169,7 +170,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
         paper_bgcolor="#0d1117",
         plot_bgcolor="#0d1117",
         height=400,
-        margin=dict(l=0, r=0, t=0, b=0),
+        margin=dict(l=2, r=0, t=0, b=0),
         showlegend=False,
         dragmode=False,
     )

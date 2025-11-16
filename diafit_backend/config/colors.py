@@ -14,5 +14,7 @@ COLOR_SCHEMES = {
         "above_range_90th": "rgba(168, 130, 255, 0.25)",
         "under_range_75th": "rgba(255, 105, 97, 0.55)",
         "under_range_90th": "rgba(255, 105, 97, 0.25)",
+        "target_upper_line": "rgba(168, 130, 255, 0.7)",
+        "target_lower_line": "rgba(255, 105, 97, 0.7)",
     },
 }
