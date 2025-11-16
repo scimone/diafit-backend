@@ -56,6 +56,12 @@ def list_meal(
         None,
         description="Filter by impact type (e.g. 'SHORT', 'MEDIUM', 'LONG')",
     ),
+    min_carbs: Optional[int] = Query(
+        None, description="Filter by minimum carbohydrates value"
+    ),
+    max_carbs: Optional[int] = Query(
+        None, description="Filter by maximum carbohydrates value"
+    ),
 ):
     """
     Example usage:
@@ -63,6 +69,7 @@ def list_meal(
     - /api/meal/list?start=2025-11-03T00:00:00Z&end=2025-11-03T23:59:59Z
     - /api/meal/list?meal_type=BREAKFAST
     - /api/meal/list?impact_type=LONG
+    - /api/meal/list?min_carbs=20&max_carbs=50
     """
     queryset = MealEntity.objects.all()
 
@@ -79,6 +86,10 @@ def list_meal(
         queryset = queryset.filter(meal_type__iexact=meal_type)
     if impact_type:
         queryset = queryset.filter(impact_type__iexact=impact_type)
+    if min_carbs is not None:
+        queryset = queryset.filter(carbohydrates__gte=min_carbs)
+    if max_carbs is not None:
+        queryset = queryset.filter(carbohydrates__lte=max_carbs)
 
     # Order and limit results
     queryset = queryset.order_by("-meal_time_utc")[:count]
