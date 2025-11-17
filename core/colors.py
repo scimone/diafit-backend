@@ -1,5 +1,3 @@
-# diafit_backend/config/colors.py
-
 COLOR_SCHEMES = {
     "diafit": {
         "in_range": "rgba(140, 237, 194, 1)",

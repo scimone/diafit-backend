@@ -4,7 +4,7 @@ import json
 import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 
-from diafit_backend.config.colors import COLOR_SCHEMES
+from core.colors import COLOR_SCHEMES
 
 
 def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:

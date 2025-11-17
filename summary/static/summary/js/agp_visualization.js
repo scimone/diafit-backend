@@ -62,17 +62,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     const pointsPerHour = 12;
+
+    // Fetch CSS variable values
+    const getCSSVariable = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+    const targetLowerColor = getCSSVariable('--agp-target-lower-line');
+    const targetUpperColor = getCSSVariable('--agp-target-upper-line');
+
     const targetShapes = [
         {
             type: 'line', xref: 'paper', yref: 'y',
             x0: 0, x1: 1, y0: 70, y1: 70,
-            line: { color: 'rgba(255, 105, 97, 0.7))', width: 2 }, // target_lower_line
+            line: { color: targetLowerColor, width: 2 }, // target_lower_line
             layer: 'below'
         },
         {
             type: 'line', xref: 'paper', yref: 'y',
             x0: 0, x1: 1, y0: 180, y1: 180,
-            line: { color: 'rgba(168, 130, 255, 0.7)', width: 2 }, // target_upper_line
+            line: { color: targetUpperColor, width: 2 }, // target_upper_line
             layer: 'below'
         }
     ];
