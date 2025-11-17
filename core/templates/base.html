@@ -20,10 +20,13 @@
         </div>
         <div class="navbar-right">
             {% if user.is_authenticated %}
-                <form method="POST" action="{% url 'logout' %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit">Logout ({{ user.username }})</button>
-                </form>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <a href="{% url 'accounts:user_settings' %}">Settings</a>
+                    <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Logout ({{ user.username }})</button>
+                    </form>
+                </div>
             {% else %}
                 <a href="{% url 'login' %}">Login</a>
             {% endif %}

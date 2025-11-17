@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}User Settings{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'core/css/user_settings.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container user-settings-container">
+    <h2>User Settings</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- System Settings -->
+        <div class="section">
+            <h3>System Settings</h3>
+            <div class="form-group">
+                <label>Timezone</label>
+                {{ form.timezone }}
+            </div>
+        </div>
+
+        <!-- Appearance Settings -->
+        <div class="section">
+            <h3>Appearance</h3>
+            <div class="form-group">
+                <label>Theme</label>
+                {{ form.theme }}
+            </div>
+        </div>
+
+        <!-- Diabetes Management Settings -->
+        <div class="section">
+            <h3>Diabetes Management</h3>
+            <div class="form-group">
+                <label>Preferred Glucose Unit</label>
+                {{ form.preferred_unit }}
+            </div>
+
+            <div class="form-group">
+                <label>Very Low Threshold</label>
+                {{ form.glucose_target_very_low }}
+            </div>
+            <div class="form-group">
+                <label>Low Threshold</label>
+                {{ form.glucose_target_low }}
+            </div>
+            <div class="form-group">
+                <label>High Threshold</label>
+                {{ form.glucose_target_high }}
+            </div>
+            <div class="form-group">
+                <label>Very High Threshold</label>
+                {{ form.glucose_target_very_high }}
+            </div>
+        </div>
+
+        <button type="submit">Save Settings</button>
+    </form>
+</div>
+{% endblock %}
