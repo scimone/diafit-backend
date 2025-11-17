@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from django.utils import timezone
+from pytz import UTC
 from pytz import timezone as pytz_timezone
 
 from diafit_backend.models.cgm_entity import CgmEntity
@@ -25,17 +26,20 @@ def agp_visualization(request):
 
     # Get today's CGM data (from midnight until now)
     now = timezone.now()
-    today_start = timezone.make_aware(datetime.combine(now.date(), time.min))
+    tz = pytz_timezone("Europe/Berlin")
+    now_tz = timezone.localtime(now, tz)
+    today_start_tz = tz.localize(datetime.combine(now_tz.date(), time.min))
+    today_start_utc = today_start_tz.astimezone(UTC)
+    now_utc = now_tz.astimezone(UTC)
     today_cgm_data = (
         CgmEntity.objects.filter(
-            user=user, timestamp__gte=today_start, timestamp__lte=now
+            user=user, timestamp__gte=today_start_utc, timestamp__lte=now_utc
         )
         .order_by("timestamp")
         .values_list("timestamp", "value_mgdl")
     )
 
     # Convert to format suitable for plotting
-    tz = pytz_timezone("Europe/Berlin")
     today_cgm = [
         {
             "timestamp": timezone.localtime(ts, tz).strftime("%H:%M:%S"),
