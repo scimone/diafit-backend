@@ -5,4 +5,47 @@
 {% block content %}
 <div class="header">
     <h1>Home</h1>
+</div>
+<div class="main-layout">
+    <div class="left-column">
+        {% if error_message %}
+            <div class="alert">
+                ⚠️ <strong>{{ error_message }}</strong>
+                <p class="hint-text">
+                    To generate rolling summaries with AGP data, ensure the daily summary task is running.
+                </p>
+            </div>
+        {% elif summary %}
+            <div class="chart-container">
+                <div id="agpChart"></div>
+            </div>
+
+            {% if plotly_graph %}
+                <script id="plotly-data" type="application/json">
+                    {{ plotly_graph|safe }}
+                </script>
+            {% else %}
+                <div class="no-data-message">
+                    No AGP graph data available for this period.
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="no-data-message">
+                No AGP data available. Please ensure rolling summaries are calculated.
+            </p>
+        {% endif %}
+    </div>
+    {% if plotly_graph %}
+        <script>
+            (function() {
+                var graphData = {{ plotly_graph|safe }};
+                Plotly.newPlot('agpChart', graphData.data, graphData.layout, {responsive: true});
+            })();
+        </script>
+    {% else %}
+        <script>
+            document.getElementById('agpChart').innerHTML = '<div style="padding: 40px; text-align: center; color: #666;">No AGP graph data available for this period.</div>';
+        </script>
+    {% endif %}
+</div>
 {% endblock %}
