@@ -60,13 +60,27 @@ document.addEventListener('DOMContentLoaded', () => {
             else resetHighlight();
         });
     });
-
+    
     const pointsPerHour = 12;
+    const targetShapes = [
+        {
+            type: 'line', xref: 'paper', yref: 'y',
+            x0: 0, x1: 1, y0: 70, y1: 70,
+            line: { color: 'rgba(255, 105, 97, 0.7))', width: 2 }, // target_lower_line
+            layer: 'below'
+        },
+        {
+            type: 'line', xref: 'paper', yref: 'y',
+            x0: 0, x1: 1, y0: 180, y1: 180,
+            line: { color: 'rgba(168, 130, 255, 0.7)', width: 2 }, // target_upper_line
+            layer: 'below'
+        }
+    ];
     const highlightRange = (startHour, endHour) => {
         const startIdx = startHour * pointsPerHour;
         const endIdx = endHour * pointsPerHour;
 
-        const shapes = startHour > endHour
+        const highlightShapes = startHour > endHour
             ? [
                 { type: 'rect', x0: endIdx, x1: startIdx }
               ].map(s => ({
@@ -81,8 +95,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 fillcolor: 'rgba(13, 17, 23, 0.8)', line: { width: 0 }, layer: 'above'
               }));
 
-        Plotly.relayout('agpChart', { shapes });
+        Plotly.relayout('agpChart', { shapes: [...targetShapes, ...highlightShapes] });
     };
 
-    const resetHighlight = () => Plotly.relayout('agpChart', { shapes: [] });
+    const resetHighlight = () => Plotly.relayout('agpChart', { shapes: targetShapes });
 });
