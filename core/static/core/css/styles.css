@@ -23,3 +23,52 @@ body {
     flex: 1; /* Allow the container to expand and fill available space */
     overflow: hidden; /* Prevent the entire box from scrolling */
 }
+
+/* Navbar Styles */
+.navbar {
+    background-color: #161b22;
+    border-bottom: 1px solid #30363d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.navbar a {
+    display: block;
+    color: #c9d1d9;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.navbar a:hover {
+    color: #58a6ff;
+}
+
+.navbar a.active {
+    color: #58a6ff;
+}
+
+.navbar-right {
+    margin-left: auto;
+}
+
+.navbar-right button {
+    background: transparent;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.navbar-right button:hover {
+    background: #21262d;
+    border-color: #58a6ff;
+    color: #58a6ff;
+}
