@@ -4,7 +4,7 @@ import json
 import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
 
-from core.colors import COLOR_SCHEMES
+from core.colors import COLORS
 
 
 def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
@@ -51,14 +51,14 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
     p10_in_range = clip_to_range(p10, target_lower, target_upper)
     p90_in_range = clip_to_range(p90, target_lower, target_upper)
     add_percentile_fill(
-        fig, x_values, p90_in_range, p10_in_range, COLOR_SCHEMES["agp"]["in_range_90th"]
+        fig, x_values, p90_in_range, p10_in_range, COLORS["agp"]["in_range_90th"]
     )
 
     # 25-75th percentile in range (dark green)
     p25_in_range = clip_to_range(p25, target_lower, target_upper)
     p75_in_range = clip_to_range(p75, target_lower, target_upper)
     add_percentile_fill(
-        fig, x_values, p75_in_range, p25_in_range, COLOR_SCHEMES["agp"]["in_range_75th"]
+        fig, x_values, p75_in_range, p25_in_range, COLORS["agp"]["in_range_75th"]
     )
 
     # Median
@@ -67,7 +67,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
             x=x_values,
             y=p50,
             mode="lines",
-            line=dict(color=COLOR_SCHEMES["agp"]["in_range_median"], width=3),
+            line=dict(color=COLORS["agp"]["in_range_median"], width=3),
             name="Median (50th)",
             showlegend=False,
             hoverinfo="skip",
@@ -81,7 +81,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
         x_values,
         p75_above,
         [target_upper] * len(x_values),
-        COLOR_SCHEMES["agp"]["above_range_75th"],
+        COLORS["agp"]["above_range_75th"],
     )
 
     # 25-75th percentile below range (dark red)
@@ -91,25 +91,25 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
         x_values,
         [target_lower] * len(x_values),
         p25_below,
-        COLOR_SCHEMES["agp"]["under_range_75th"],
+        COLORS["agp"]["under_range_75th"],
     )
 
     # 10-90th percentile above range (light purple)
     p90_above = [max(v, target_upper) for v in p90]
     add_percentile_fill(
-        fig, x_values, p90_above, p75_above, COLOR_SCHEMES["agp"]["above_range_90th"]
+        fig, x_values, p90_above, p75_above, COLORS["agp"]["above_range_90th"]
     )
 
     # 10-90th percentile below range (light red)
     p10_below = [min(v, target_lower) for v in p10]
     add_percentile_fill(
-        fig, x_values, p25_below, p10_below, COLOR_SCHEMES["agp"]["under_range_90th"]
+        fig, x_values, p25_below, p10_below, COLORS["agp"]["under_range_90th"]
     )
 
     # Add reference lines
     for y, color, label in [
-        (target_lower, COLOR_SCHEMES["agp"]["target_lower_line"], "70"),
-        (target_upper, COLOR_SCHEMES["agp"]["target_upper_line"], "180"),
+        (target_lower, COLORS["agp"]["target_lower_line"], "70"),
+        (target_upper, COLORS["agp"]["target_upper_line"], "180"),
     ]:
         fig.add_hline(
             y=y,
@@ -131,11 +131,11 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
         for reading in today_cgm:
             value = reading["value"]
             if value < target_lower:
-                today_colors.append(COLOR_SCHEMES["diafit"]["under_range"])
+                today_colors.append(COLORS["diafit"]["under_range"])
             elif value > target_upper:
-                today_colors.append(COLOR_SCHEMES["diafit"]["above_range"])
+                today_colors.append(COLORS["diafit"]["above_range"])
             else:
-                today_colors.append(COLOR_SCHEMES["diafit"]["in_range"])
+                today_colors.append(COLORS["diafit"]["in_range"])
 
         fig.add_trace(
             go.Scatter(

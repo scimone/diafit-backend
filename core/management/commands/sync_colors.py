@@ -3,7 +3,7 @@ from pathlib import Path
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from core.colors import COLOR_SCHEMES
+from core.colors import COLORS
 
 
 class Command(BaseCommand):
@@ -12,7 +12,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         css_lines = [":root {"]
 
-        for group, colors in COLOR_SCHEMES.items():
+        for group, colors in COLORS.items():
             for key, value in colors.items():
                 css_var = (
                     f"--{group.replace('_', '-')}-{key.replace('_', '-')}: {value};"
