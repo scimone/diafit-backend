@@ -18,16 +18,23 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.shortcuts import redirect
+from django.contrib.auth import views as auth_views
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 from api.api import api
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", lambda request: redirect("api/docs", permanent=True)),
+    path("", TemplateView.as_view(template_name="start_page.html"), name="home"),
+    # path("", lambda request: redirect("api/docs", permanent=True)),
     path("api/", api.urls),
     path("summary/", include("summary.urls")),
+    # path("accounts/", include("django.contrib.auth.urls")),
+    path(
+        "login/", auth_views.LoginView.as_view(template_name="login.html"), name="login"
+    ),
+    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
 ]
 
 if settings.DEBUG:
