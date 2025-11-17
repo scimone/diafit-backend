@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "diafit_backend",
     "summary",
+    "home",
     "django_q",
     "interactions",
 ]
