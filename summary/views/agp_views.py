@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 from django.utils import timezone
+from pytz import timezone as pytz_timezone
 
 from diafit_backend.models.cgm_entity import CgmEntity
 from summary.services import create_agp_plotly_graph, get_agp_summary
@@ -34,10 +35,12 @@ def agp_visualization(request):
     )
 
     # Convert to format suitable for plotting
+    tz = pytz_timezone("Europe/Berlin")
     today_cgm = [
         {
-            "timestamp": ts.strftime("%H:%M:%S"),
-            "hour": ts.hour + ts.minute / 60.0,
+            "timestamp": timezone.localtime(ts, tz).strftime("%H:%M:%S"),
+            "hour": timezone.localtime(ts, tz).hour
+            + timezone.localtime(ts, tz).minute / 60.0,
             "value": val,
         }
         for ts, val in today_cgm_data
