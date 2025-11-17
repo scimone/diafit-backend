@@ -164,7 +164,7 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
             tickfont=dict(color="#8b949e"),
             range=[0, len(x_values) - 1],
         ),
-        yaxis=dict(range=[0, 300], gridcolor="#30363d", tickfont=dict(color="#8b949e")),
+        yaxis=dict(range=[0, 250], gridcolor="#30363d", tickfont=dict(color="#8b949e")),
         hovermode=False,
         template="plotly_dark",
         paper_bgcolor="#0d1117",
