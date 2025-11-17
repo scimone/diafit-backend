@@ -7,7 +7,7 @@ from plotly.utils import PlotlyJSONEncoder
 from core.colors import COLORS
 
 
-def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
+def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
     """Generate a Plotly AGP chart and return JSON for embedding.
 
     Args:
@@ -119,37 +119,37 @@ def create_agp_plotly_graph(agp_data: dict, today_cgm: list = None) -> str:
             annotation_position="left",
         )
 
-    # Add today's CGM scatter points if available
-    if today_cgm:
+    # Add CGM scatter points if available
+    if cgm_data:
         # Convert hours to x-axis indices (assuming 12 points per hour)
         points_per_hour = 12
-        today_x = [reading["hour"] * points_per_hour for reading in today_cgm]
-        today_y = [reading["value"] for reading in today_cgm]
+        day_x = [reading["hour"] * points_per_hour for reading in cgm_data]
+        day_y = [reading["value"] for reading in cgm_data]
 
         # Assign colors based on target range
-        today_colors = []
-        for reading in today_cgm:
+        day_colors = []
+        for reading in cgm_data:
             value = reading["value"]
             if value < target_lower:
-                today_colors.append(COLORS["diafit"]["under_range"])
+                day_colors.append(COLORS["diafit"]["under_range"])
             elif value > target_upper:
-                today_colors.append(COLORS["diafit"]["above_range"])
+                day_colors.append(COLORS["diafit"]["above_range"])
             else:
-                today_colors.append(COLORS["diafit"]["in_range"])
+                day_colors.append(COLORS["diafit"]["in_range"])
 
         fig.add_trace(
             go.Scatter(
-                x=today_x,
-                y=today_y,
+                x=day_x,
+                y=day_y,
                 mode="markers",
                 marker=dict(
                     size=6,
-                    color=today_colors,
+                    color=day_colors,
                     opacity=1.0,
                     # line=dict(width=0.3, color="#0d1117"),
                 ),
                 name="Today's CGM",
-                customdata=[reading["timestamp"] for reading in today_cgm],
+                customdata=[reading["timestamp"] for reading in cgm_data],
                 showlegend=False,
                 hoverinfo="skip",
             )
