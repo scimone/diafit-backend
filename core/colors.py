@@ -18,8 +18,8 @@ COLORS = {
     "theme": {
         # Background colors
         "background_primary": "#0d1117",
-        "background_secondary": "#161b22",
-        "background_tertiary": "#21262d",
+        "background_secondary": "#0d1117",
+        "background_tertiary": "#161b22",
         "background_hover": "#1f3040",
         # Surface/Border colors
         "border_default": "#30363d",

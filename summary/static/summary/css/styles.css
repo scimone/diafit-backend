@@ -137,7 +137,7 @@ h1 {
     display: flex;
     align-items: center;
     padding: 12px 15px;
-    background: var(--theme-background-secondary);
+    background: var(--theme-background-tertiary);
     border-left: 3px solid var(--theme-accent-primary);
     border-radius: 6px;
     cursor: pointer;
