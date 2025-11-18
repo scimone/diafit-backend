@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (plotlyDataEl && chartContainer) {
         try {
             const graphData = JSON.parse(plotlyDataEl.textContent);
-            Plotly.newPlot(chartContainer, graphData.data, graphData.layout, { responsive: true });
+            Plotly.newPlot(chartContainer, graphData.data, graphData.layout, { ...graphData.config, responsive: true });
         } catch (error) {
             chartContainer.innerHTML = `
                 <div class="error-text">

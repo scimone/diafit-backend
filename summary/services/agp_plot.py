@@ -43,6 +43,7 @@ def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
                 fillcolor=color,
                 line=dict(color=color, width=0),
                 hoverinfo="skip",
+                hovertemplate=None,
                 showlegend=False,
             )
         )
@@ -71,6 +72,7 @@ def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
             name="Median (50th)",
             showlegend=False,
             hoverinfo="skip",
+            hovertemplate=None,
         )
     )
 
@@ -146,14 +148,26 @@ def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
                     size=6,
                     color=day_colors,
                     opacity=1.0,
-                    # line=dict(width=0.3, color="#0d1117"),
                 ),
-                name="Today's CGM",
+                name="CGM",
                 customdata=[reading["timestamp"] for reading in cgm_data],
                 showlegend=False,
-                hoverinfo="skip",
+                hoverinfo="all",  # Enable hover info for today's CGM
+                hovertemplate="Time: %{customdata}<br>Value: %{y} mg/dL",  # Custom hover template
             )
         )
+
+    # # Explicitly set hoverinfo and hovertemplate for the median trace
+    # for trace in fig.data:
+    #     if trace.name == "Median (50th)":
+    #         trace.hoverinfo = "skip"
+    #         trace.hovertemplate = None
+
+    # # Update hovertemplate for all other traces to skip hover info
+    # for trace in fig.data:
+    #     if trace.name != "Today's CGM" and trace.name != "Median (50th)":
+    #         trace.hoverinfo = "skip"
+    #         trace.hovertemplate = None
 
     fig.update_layout(
         xaxis=dict(
