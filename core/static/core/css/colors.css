@@ -3,12 +3,12 @@
     --diafit-above-range: rgba(168, 130, 255, 1);
     --diafit-under-range: rgba(255, 105, 97, 1);
     --agp-in-range-median: rgba(67, 217, 152, 1);
-    --agp-in-range-75th: rgba(67, 217, 152, 0.55);
-    --agp-in-range-90th: rgba(67, 217, 152, 0.25);
+    --agp-in-range-75th: rgba(52, 152, 112, 1);
+    --agp-in-range-90th: rgba(33, 74, 63, 1);
     --agp-above-range-75th: rgba(168, 130, 255, 0.45);
-    --agp-above-range-90th: rgba(168, 130, 255, 0.25);
+    --agp-above-range-90th: rgba(52, 45, 81, 1);
     --agp-under-range-75th: rgba(255, 105, 97, 0.55);
-    --agp-under-range-90th: rgba(255, 105, 97, 0.25);
+    --agp-under-range-90th: rgba(74, 39, 41, 1);
     --agp-target-upper-line: rgba(168, 130, 255, 0.7);
     --agp-target-lower-line: rgba(255, 105, 97, 0.7);
     --theme-background-primary: #0d1117;

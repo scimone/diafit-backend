@@ -108,18 +108,19 @@ def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
         fig, x_values, p25_below, p10_below, COLORS["agp"]["under_range_90th"]
     )
 
-    # Add reference lines
-    for y, color, label in [
-        (target_lower, COLORS["agp"]["target_lower_line"], "70"),
-        (target_upper, COLORS["agp"]["target_upper_line"], "180"),
-    ]:
-        fig.add_hline(
-            y=y,
-            # line_dash="dash",
-            line_color=color,
-            annotation_text=label,
-            annotation_position="left",
-        )
+    # Add a filled area for the target range (dark grey background)
+    fig.add_shape(
+        type="rect",
+        xref="paper",  # Extend across the entire x-axis
+        yref="y",
+        x0=0,
+        x1=1,
+        y0=target_lower,
+        y1=target_upper,
+        fillcolor=COLORS["theme"]["background_tertiary"],  # Dark grey with transparency
+        line=dict(width=0),  # No border
+        layer="below",  # Place it in the background
+    )
 
     # Add CGM scatter points if available
     if cgm_data:
@@ -166,7 +167,7 @@ def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
             tickfont=dict(color="#8b949e"),
             range=[0, len(x_values) - 1],
         ),
-        yaxis=dict(range=[0, 250], gridcolor="#30363d", tickfont=dict(color="#8b949e")),
+        yaxis=dict(range=[0, 250], showgrid=False, tickfont=dict(color="#8b949e")),
         hovermode=False,
         template="plotly_dark",
         paper_bgcolor="#0d1117",
