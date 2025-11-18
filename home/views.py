@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, time
 
 from django.contrib.auth.decorators import login_required
@@ -52,33 +53,33 @@ def home(request):
     if summary and summary.agp:
         try:
             plotly_graph = create_agp_plotly_graph(summary.agp, today_cgm)
-            # plotly_graph = json.loads(plotly_graph)  # Parse the JSON to modify it
+            plotly_graph = json.loads(plotly_graph)  # Parse the JSON to modify it
 
-            # # Update the layout
-            # plotly_graph["layout"]["xaxis"]["showspikes"] = True  # Enable spikes
-            # plotly_graph["layout"]["xaxis"]["spikemode"] = (
-            #     "across"  # Show spike line across the plot
-            # )
-            # plotly_graph["layout"]["xaxis"]["spikesnap"] = (
-            #     "cursor"  # Snap spike to cursor
-            # )
-            # plotly_graph["layout"]["xaxis"]["spikedash"] = (
-            #     "solid"  # Solid line for spike
-            # )
-            # plotly_graph["layout"]["xaxis"]["spikecolor"] = (
-            #     "#30363d"  # Change spike color to red
-            # )
-            # plotly_graph["layout"]["xaxis"]["spikethickness"] = (
-            #     3  # Increase spike thickness
-            # )
-            # plotly_graph["layout"]["spikedistance"] = (
-            #     -1  # Show spike regardless of distance from cursor
-            # )
-            # plotly_graph["layout"]["hovermode"] = (
-            #     "x"  # Show spike regardless of distance from cursor
-            # )
+            # Update the layout
+            plotly_graph["layout"]["xaxis"]["showspikes"] = True  # Enable spikes
+            plotly_graph["layout"]["xaxis"]["spikemode"] = (
+                "across"  # Show spike line across the plot
+            )
+            plotly_graph["layout"]["xaxis"]["spikesnap"] = (
+                "cursor"  # Snap spike to cursor
+            )
+            plotly_graph["layout"]["xaxis"]["spikedash"] = (
+                "solid"  # Solid line for spike
+            )
+            plotly_graph["layout"]["xaxis"]["spikecolor"] = (
+                "#30363d"  # Change spike color to red
+            )
+            plotly_graph["layout"]["xaxis"]["spikethickness"] = (
+                3  # Increase spike thickness
+            )
+            plotly_graph["layout"]["spikedistance"] = (
+                -1  # Show spike regardless of distance from cursor
+            )
+            plotly_graph["layout"]["hovermode"] = (
+                "x"  # Show spike regardless of distance from cursor
+            )
 
-            # plotly_graph = json.dumps(plotly_graph)  # Convert back to JSON
+            plotly_graph = json.dumps(plotly_graph)  # Convert back to JSON
             agp_patterns = summary.agp_trends
         except Exception as e:
             error_message = f"Error creating graph: {e}"
