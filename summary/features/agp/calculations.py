@@ -138,12 +138,14 @@ def calculate_agp(
     for p in ["p_10", "p_25", "p_50", "p_75", "p_90"]:
         values = stats[p].values
 
-        # Apply smoothing if requested
+        # Apply smoothing if requested - use circular convolution for smooth wrap-around
         if smoothed:
+            # Extend the array circularly for proper boundary handling
+            extended_values = np.concatenate([values[-1:], values, values[:1]])
             smoothed_values = np.convolve(
-                values, np.array([1.0, 4.0, 1.0]) / 6.0, "valid"
+                extended_values, np.array([1.0, 4.0, 1.0]) / 6.0, "valid"
             )
-            values = np.append(np.append(values[0], smoothed_values), values[-1])
+            values = smoothed_values
 
         # Add periodic boundary condition (wrap around to start)
         percentiles[p] = np.append(values, values[0])
@@ -152,7 +154,10 @@ def calculate_agp(
     hours = np.append(list(stats.index), 24)
 
     # Interpolate to get points_per_day points
-    time_array = np.linspace(0, 24, points_per_day)
+    # Use endpoint=False to avoid duplicating the wraparound point
+    # This ensures true periodicity: point[0] and point[288] would be the same,
+    # so we only include points [0, 287]
+    time_array = np.linspace(0, 24, points_per_day, endpoint=False)
     interpolated = {}
 
     for p, values in percentiles.items():

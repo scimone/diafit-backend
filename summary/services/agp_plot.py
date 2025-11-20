@@ -1,5 +1,6 @@
 # summary/services/agp_plot.py
 import json
+from datetime import datetime
 
 import plotly.graph_objects as go
 from plotly.utils import PlotlyJSONEncoder
@@ -7,12 +8,16 @@ from plotly.utils import PlotlyJSONEncoder
 from core.colors import COLORS
 
 
-def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
+def create_agp_plotly_graph(
+    agp_data: dict, cgm_data: list = None, end_timestamp: str = "00:00"
+) -> str:
     """Generate a Plotly AGP chart and return JSON for embedding.
 
     Args:
-        agp_data: Dictionary containing AGP percentile data
-        today_cgm: Optional list of dicts with 'hour' and 'value' for today's CGM readings
+        agp_data: Dictionary containing AGP percentile data (always 0:00-24:00)
+        cgm_data: Optional list of dicts with 'hour' and 'value' for today's CGM readings
+        end_timestamp: Optional end time for the AGP window (e.g., "18:00"). Default is "00:00" (midnight).
+                       The graph will show data from end_timestamp - 24h to end_timestamp.
     """
     time_labels = agp_data.get("time", [])
     p10 = agp_data.get("p10", [])
@@ -20,6 +25,42 @@ def create_agp_plotly_graph(agp_data: dict, cgm_data: list = None) -> str:
     p50 = agp_data.get("p50", [])
     p75 = agp_data.get("p75", [])
     p90 = agp_data.get("p90", [])
+
+    # Rearrange data based on end_timestamp
+    if end_timestamp != "00:00":
+        # Parse the end_timestamp to get hours and minutes
+        try:
+            end_time = datetime.strptime(end_timestamp, "%H:%M")
+            end_hour = end_time.hour
+            end_minute = end_time.minute
+        except ValueError:
+            # If parsing fails, default to midnight
+            end_hour = 0
+            end_minute = 0
+
+        # Find the closest index in time_labels
+        end_index = 0
+        min_diff = float("inf")
+
+        for i, time_str in enumerate(time_labels):
+            try:
+                t = datetime.strptime(time_str, "%H:%M")
+                # Calculate time difference in minutes
+                diff = abs((t.hour * 60 + t.minute) - (end_hour * 60 + end_minute))
+                if diff < min_diff:
+                    min_diff = diff
+                    end_index = i
+            except ValueError:
+                continue
+
+        if end_index > 0:
+            # Simple rotation
+            time_labels = time_labels[end_index:] + time_labels[:end_index]
+            p10 = p10[end_index:] + p10[:end_index]
+            p25 = p25[end_index:] + p25[:end_index]
+            p50 = p50[end_index:] + p50[:end_index]
+            p75 = p75[end_index:] + p75[:end_index]
+            p90 = p90[end_index:] + p90[:end_index]
 
     x_values = list(range(len(time_labels)))
     fig = go.Figure()

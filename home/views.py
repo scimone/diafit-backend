@@ -52,7 +52,9 @@ def home(request):
 
     if summary and summary.agp:
         try:
-            plotly_graph = create_agp_plotly_graph(summary.agp, today_cgm)
+            plotly_graph = create_agp_plotly_graph(
+                summary.agp, today_cgm, end_timestamp="24:00"
+            )
             plotly_graph = json.loads(plotly_graph)  # Parse the JSON to modify it
 
             # Update the layout
@@ -75,9 +77,7 @@ def home(request):
             plotly_graph["layout"]["spikedistance"] = (
                 -1  # Show spike regardless of distance from cursor
             )
-            plotly_graph["layout"]["hovermode"] = (
-                "x"  # Show spike regardless of distance from cursor
-            )
+            plotly_graph["layout"]["hovermode"] = "x"  # Hover on x-axis only
 
             plotly_graph = json.dumps(plotly_graph)  # Convert back to JSON
             agp_patterns = summary.agp_trends
