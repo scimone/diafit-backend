@@ -230,11 +230,48 @@ def create_agp_plotly_graph(
             )
         )
 
+    # Calculate points per hour for positioning
+    points_per_hour = (
+        len(time_labels) // 24
+        if not extend_hours
+        else len(time_labels) // (24 + extend_hours)
+    )
+
+    # Find indices for specific times: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00
+    target_times = [f"{hour:02d}:00" for hour in range(0, 24, 3)]
+    tick_vals = []
+    tick_texts = []
+
+    for target_time in target_times:
+        try:
+            target_dt = datetime.strptime(target_time, "%H:%M")
+            target_minutes = target_dt.hour * 60 + target_dt.minute
+
+            # Find the closest index to this target time
+            min_diff = float("inf")
+            closest_idx = 0
+
+            for i, time_str in enumerate(time_labels):
+                try:
+                    t = datetime.strptime(time_str, "%H:%M")
+                    t_minutes = t.hour * 60 + t.minute
+                    diff = abs(t_minutes - target_minutes)
+                    if diff < min_diff:
+                        min_diff = diff
+                        closest_idx = i
+                except ValueError:
+                    continue
+
+            tick_vals.append(closest_idx)
+            tick_texts.append(target_time)
+        except ValueError:
+            continue
+
     fig.update_layout(
         xaxis=dict(
             tickmode="array",
-            tickvals=x_values[::24],
-            ticktext=[time_labels[i] for i in range(0, len(time_labels), 24)],
+            tickvals=tick_vals,
+            ticktext=tick_texts,
             gridcolor="#30363d",
             tickfont=dict(color="#8b949e"),
             range=[0, len(x_values) - 1],
