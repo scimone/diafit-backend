@@ -234,6 +234,7 @@ def create_agp_plotly_graph(
     cgm_data: list = None,
     end_timestamp: str = "00:00",
     extend_hours: int = 0,
+    disable_ticks: bool = False,
 ) -> str:
     """Generate a Plotly AGP chart and return JSON for embedding.
 
@@ -291,6 +292,7 @@ def create_agp_plotly_graph(
 
     # Calculate tick positions
     tick_vals, tick_texts = _calculate_tick_positions(time_labels)
+    tick_texts = tick_texts if not disable_ticks else [""] * len(tick_texts)
 
     # Configure layout
     fig.update_layout(
