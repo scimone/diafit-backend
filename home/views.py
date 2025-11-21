@@ -54,7 +54,10 @@ def home(request):
     if summary and summary.agp:
         try:
             plotly_graph = create_agp_plotly_graph(
-                summary.agp, today_cgm, end_timestamp=now_tz.strftime("%H:%M")
+                summary.agp,
+                today_cgm,
+                end_timestamp=now_tz.strftime("%H:%M"),
+                extend_hours=3,
             )
             plotly_graph = json.loads(plotly_graph)  # Parse the JSON to modify it
 

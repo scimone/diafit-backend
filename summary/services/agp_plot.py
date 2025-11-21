@@ -9,7 +9,10 @@ from core.colors import COLORS
 
 
 def create_agp_plotly_graph(
-    agp_data: dict, cgm_data: list = None, end_timestamp: str = "00:00"
+    agp_data: dict,
+    cgm_data: list = None,
+    end_timestamp: str = "00:00",
+    extend_hours: int = 0,
 ) -> str:
     """Generate a Plotly AGP chart and return JSON for embedding.
 
@@ -17,7 +20,7 @@ def create_agp_plotly_graph(
         agp_data: Dictionary containing AGP percentile data (always 0:00-24:00)
         cgm_data: Optional list of dicts with 'hour' and 'value' for today's CGM readings
         end_timestamp: Optional end time for the AGP window (e.g., "18:00"). Default is "00:00" (midnight).
-                       The graph will show data from end_timestamp - 24h to end_timestamp.
+                       The graph will show data from end_timestamp - 24h to end_timestamp + 2h.
     """
     time_labels = agp_data.get("time", [])
     p10 = agp_data.get("p10", [])
@@ -66,6 +69,19 @@ def create_agp_plotly_graph(
             p50 = p50[end_index:] + p50[:end_index]
             p75 = p75[end_index:] + p75[:end_index]
             p90 = p90[end_index:] + p90[:end_index]
+
+    if extend_hours > 0:
+        # Extend the arrays by extend_hours (add the first extend_hours to the end)
+        # Assuming 288 points per day (5-min intervals), 2 hours = 24 points
+        points_per_hour = len(time_labels) // 24
+        points_for_extend = points_per_hour * extend_hours
+        # Append the first 2 hours of data to the end
+        time_labels = time_labels + time_labels[:points_for_extend]
+        p10 = p10 + p10[:points_for_extend]
+        p25 = p25 + p25[:points_for_extend]
+        p50 = p50 + p50[:points_for_extend]
+        p75 = p75 + p75[:points_for_extend]
+        p90 = p90 + p90[:points_for_extend]
 
     x_values = list(range(len(time_labels)))
     fig = go.Figure()
