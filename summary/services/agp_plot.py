@@ -8,74 +8,75 @@ from plotly.utils import PlotlyJSONEncoder
 from core.colors import COLORS
 
 
-def create_agp_plotly_graph(
-    agp_data: dict,
-    cgm_data: list = None,
-    end_timestamp: str = "00:00",
-    extend_hours: int = 0,
-) -> str:
-    """Generate a Plotly AGP chart and return JSON for embedding.
+def _find_closest_time_index(
+    time_labels: list, target_hour: int, target_minute: int
+) -> int:
+    """Find the index of the time label closest to the target time."""
+    min_diff = float("inf")
+    closest_index = 0
+    target_minutes = target_hour * 60 + target_minute
 
-    Args:
-        agp_data: Dictionary containing AGP percentile data (always 0:00-24:00)
-        cgm_data: Optional list of dicts with 'hour' and 'value' for today's CGM readings
-        end_timestamp: Optional end time for the AGP window (e.g., "18:00"). Default is "00:00" (midnight).
-                       The graph will show data from end_timestamp - 24h to end_timestamp + 2h.
-    """
-    time_labels = agp_data.get("time", [])
-    p10 = agp_data.get("p10", [])
-    p25 = agp_data.get("p25", [])
-    p50 = agp_data.get("p50", [])
-    p75 = agp_data.get("p75", [])
-    p90 = agp_data.get("p90", [])
+    for i, time_str in enumerate(time_labels):
+        try:
+            t = datetime.strptime(time_str, "%H:%M")
+            t_minutes = t.hour * 60 + t.minute
+            diff = abs(t_minutes - target_minutes)
+            if diff < min_diff:
+                min_diff = diff
+                closest_index = i
+        except ValueError:
+            continue
 
-    # Calculate rotation offset in hours for later use with CGM data
+    return closest_index
+
+
+def _rotate_agp_data(
+    time_labels: list,
+    p10: list,
+    p25: list,
+    p50: list,
+    p75: list,
+    p90: list,
+    end_timestamp: str,
+) -> tuple:
+    """Rotate AGP data arrays based on end_timestamp."""
     rotation_hours = 0
 
-    # Rearrange data based on end_timestamp
     if end_timestamp != "00:00":
-        # Parse the end_timestamp to get hours and minutes
         try:
             end_time = datetime.strptime(end_timestamp, "%H:%M")
-            end_hour = end_time.hour
-            end_minute = end_time.minute
-            rotation_hours = end_hour + end_minute / 60.0
+            rotation_hours = end_time.hour + end_time.minute / 60.0
+            end_index = _find_closest_time_index(
+                time_labels, end_time.hour, end_time.minute
+            )
+
+            if end_index > 0:
+                time_labels = time_labels[end_index:] + time_labels[:end_index]
+                p10 = p10[end_index:] + p10[:end_index]
+                p25 = p25[end_index:] + p25[:end_index]
+                p50 = p50[end_index:] + p50[:end_index]
+                p75 = p75[end_index:] + p75[:end_index]
+                p90 = p90[end_index:] + p90[:end_index]
         except ValueError:
-            # If parsing fails, default to midnight
-            end_hour = 0
-            end_minute = 0
+            pass
 
-        # Find the closest index in time_labels
-        end_index = 0
-        min_diff = float("inf")
+    return time_labels, p10, p25, p50, p75, p90, rotation_hours
 
-        for i, time_str in enumerate(time_labels):
-            try:
-                t = datetime.strptime(time_str, "%H:%M")
-                # Calculate time difference in minutes
-                diff = abs((t.hour * 60 + t.minute) - (end_hour * 60 + end_minute))
-                if diff < min_diff:
-                    min_diff = diff
-                    end_index = i
-            except ValueError:
-                continue
 
-        if end_index > 0:
-            # Simple rotation - data is periodic, so no need for complex stitching
-            # Just rotate the arrays
-            time_labels = time_labels[end_index:] + time_labels[:end_index]
-            p10 = p10[end_index:] + p10[:end_index]
-            p25 = p25[end_index:] + p25[:end_index]
-            p50 = p50[end_index:] + p50[:end_index]
-            p75 = p75[end_index:] + p75[:end_index]
-            p90 = p90[end_index:] + p90[:end_index]
-
+def _extend_agp_data(
+    time_labels: list,
+    p10: list,
+    p25: list,
+    p50: list,
+    p75: list,
+    p90: list,
+    extend_hours: int,
+) -> tuple:
+    """Extend AGP data arrays by duplicating the first N hours at the end."""
     if extend_hours > 0:
-        # Extend the arrays by extend_hours (add the first extend_hours to the end)
-        # Assuming 288 points per day (5-min intervals), 2 hours = 24 points
         points_per_hour = len(time_labels) // 24
         points_for_extend = points_per_hour * extend_hours
-        # Append the first 2 hours of data to the end
+
         time_labels = time_labels + time_labels[:points_for_extend]
         p10 = p10 + p10[:points_for_extend]
         p25 = p25 + p25[:points_for_extend]
@@ -83,19 +84,26 @@ def create_agp_plotly_graph(
         p75 = p75 + p75[:points_for_extend]
         p90 = p90 + p90[:points_for_extend]
 
-    x_values = list(range(len(time_labels)))
-    fig = go.Figure()
+    return time_labels, p10, p25, p50, p75, p90
 
-    # Target range bounds
-    TARGET_RANGE = (70, 180)
-    target_lower, target_upper = TARGET_RANGE
 
-    # Helper to clip values to target range
+def _add_percentile_bands(
+    fig: go.Figure,
+    x_values: list,
+    p10: list,
+    p25: list,
+    p50: list,
+    p75: list,
+    p90: list,
+    target_range: tuple,
+):
+    """Add all percentile bands to the figure."""
+    target_lower, target_upper = target_range
+
     def clip_to_range(values, lower, upper):
         return [max(lower, min(upper, v)) for v in values]
 
-    # Helper to add percentile fill area
-    def add_percentile_fill(fig, x, y_upper, y_lower, color):
+    def add_fill(x, y_upper, y_lower, color):
         fig.add_trace(
             go.Scatter(
                 x=x + x[::-1],
@@ -110,134 +118,99 @@ def create_agp_plotly_graph(
             )
         )
 
-    # 10-90th percentile in range (light green)
+    # In-range bands
     p10_in_range = clip_to_range(p10, target_lower, target_upper)
     p90_in_range = clip_to_range(p90, target_lower, target_upper)
-    add_percentile_fill(
-        fig, x_values, p90_in_range, p10_in_range, COLORS["agp"]["in_range_90th"]
-    )
+    add_fill(x_values, p90_in_range, p10_in_range, COLORS["agp"]["in_range_90th"])
 
-    # 25-75th percentile in range (dark green)
     p25_in_range = clip_to_range(p25, target_lower, target_upper)
     p75_in_range = clip_to_range(p75, target_lower, target_upper)
-    add_percentile_fill(
-        fig, x_values, p75_in_range, p25_in_range, COLORS["agp"]["in_range_75th"]
-    )
+    add_fill(x_values, p75_in_range, p25_in_range, COLORS["agp"]["in_range_75th"])
 
-    # Median
+    # Median line
     fig.add_trace(
         go.Scatter(
             x=x_values,
             y=p50,
             mode="lines",
             line=dict(color=COLORS["agp"]["in_range_median"], width=3),
-            name="Median (50th)",
             showlegend=False,
             hoverinfo="skip",
             hovertemplate=None,
         )
     )
 
-    # 25-75th percentile above range (dark purple)
+    # Above-range bands
     p75_above = [max(v, target_upper) for v in p75]
-    add_percentile_fill(
-        fig,
+    add_fill(
         x_values,
         p75_above,
         [target_upper] * len(x_values),
         COLORS["agp"]["above_range_75th"],
     )
 
-    # 25-75th percentile below range (dark red)
+    p90_above = [max(v, target_upper) for v in p90]
+    add_fill(x_values, p90_above, p75_above, COLORS["agp"]["above_range_90th"])
+
+    # Below-range bands
     p25_below = [min(v, target_lower) for v in p25]
-    add_percentile_fill(
-        fig,
+    add_fill(
         x_values,
         [target_lower] * len(x_values),
         p25_below,
         COLORS["agp"]["under_range_75th"],
     )
 
-    # 10-90th percentile above range (light purple)
-    p90_above = [max(v, target_upper) for v in p90]
-    add_percentile_fill(
-        fig, x_values, p90_above, p75_above, COLORS["agp"]["above_range_90th"]
-    )
-
-    # 10-90th percentile below range (light red)
     p10_below = [min(v, target_lower) for v in p10]
-    add_percentile_fill(
-        fig, x_values, p25_below, p10_below, COLORS["agp"]["under_range_90th"]
-    )
+    add_fill(x_values, p25_below, p10_below, COLORS["agp"]["under_range_90th"])
 
-    # Add a filled area for the target range (dark grey background)
-    fig.add_shape(
-        type="rect",
-        xref="paper",  # Extend across the entire x-axis
-        yref="y",
-        x0=0,
-        x1=1,
-        y0=target_lower,
-        y1=target_upper,
-        fillcolor=COLORS["theme"]["background_tertiary"],  # Dark grey with transparency
-        line=dict(width=0),  # No border
-        layer="below",  # Place it in the background
-    )
 
-    # Add CGM scatter points if available
-    if cgm_data:
-        # Convert hours to x-axis indices (assuming 12 points per hour)
-        points_per_hour = 12
+def _add_cgm_scatter(
+    fig: go.Figure, cgm_data: list, rotation_hours: float, target_range: tuple
+):
+    """Add CGM scatter points to the figure."""
+    if not cgm_data:
+        return
 
-        # Adjust CGM hours to account for rotation
-        # The AGP now shows data from (rotation_hours - 24) to rotation_hours
-        # So we need to shift CGM hours accordingly
-        day_x = []
-        for reading in cgm_data:
-            original_hour = reading["hour"]
-            # Shift the hour by the rotation amount
-            adjusted_hour = (original_hour - rotation_hours) % 24
-            day_x.append(adjusted_hour * points_per_hour)
+    target_lower, target_upper = target_range
+    points_per_hour = 12
 
-        day_y = [reading["value"] for reading in cgm_data]
+    day_x = []
+    day_y = []
+    day_colors = []
+    timestamps = []
 
-        # Assign colors based on target range
-        day_colors = []
-        for reading in cgm_data:
-            value = reading["value"]
-            if value < target_lower:
-                day_colors.append(COLORS["diafit"]["under_range"])
-            elif value > target_upper:
-                day_colors.append(COLORS["diafit"]["above_range"])
-            else:
-                day_colors.append(COLORS["diafit"]["in_range"])
+    for reading in cgm_data:
+        original_hour = reading["hour"]
+        adjusted_hour = (original_hour - rotation_hours) % 24
+        day_x.append(adjusted_hour * points_per_hour)
+        day_y.append(reading["value"])
+        timestamps.append(reading["timestamp"])
 
-        fig.add_trace(
-            go.Scatter(
-                x=day_x,
-                y=day_y,
-                mode="markers",
-                marker=dict(
-                    size=6,
-                    color=day_colors,
-                    opacity=1.0,
-                ),
-                name="CGM",
-                customdata=[reading["timestamp"] for reading in cgm_data],
-                showlegend=False,
-                hoverinfo="y",  # Enable hover info for today's CGM
-                hovertemplate="Time: %{customdata}<br>Value: %{y} mg/dL",  # Custom hover template
-            )
+        value = reading["value"]
+        if value < target_lower:
+            day_colors.append(COLORS["diafit"]["under_range"])
+        elif value > target_upper:
+            day_colors.append(COLORS["diafit"]["above_range"])
+        else:
+            day_colors.append(COLORS["diafit"]["in_range"])
+
+    fig.add_trace(
+        go.Scatter(
+            x=day_x,
+            y=day_y,
+            mode="markers",
+            marker=dict(size=6, color=day_colors, opacity=1.0),
+            customdata=timestamps,
+            showlegend=False,
+            hoverinfo="y",
+            hovertemplate="Time: %{customdata}<br>Value: %{y} mg/dL",
         )
-
-    # Calculate points per hour for positioning
-    points_per_hour = (
-        len(time_labels) // 24
-        if not extend_hours
-        else len(time_labels) // (24 + extend_hours)
     )
 
-    # Find indices for specific times: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00
+
+def _calculate_tick_positions(time_labels: list) -> tuple:
+    """Calculate x-axis tick positions for 3-hour intervals."""
     target_times = [f"{hour:02d}:00" for hour in range(0, 24, 3)]
     tick_vals = []
     tick_texts = []
@@ -245,28 +218,81 @@ def create_agp_plotly_graph(
     for target_time in target_times:
         try:
             target_dt = datetime.strptime(target_time, "%H:%M")
-            target_minutes = target_dt.hour * 60 + target_dt.minute
-
-            # Find the closest index to this target time
-            min_diff = float("inf")
-            closest_idx = 0
-
-            for i, time_str in enumerate(time_labels):
-                try:
-                    t = datetime.strptime(time_str, "%H:%M")
-                    t_minutes = t.hour * 60 + t.minute
-                    diff = abs(t_minutes - target_minutes)
-                    if diff < min_diff:
-                        min_diff = diff
-                        closest_idx = i
-                except ValueError:
-                    continue
-
+            closest_idx = _find_closest_time_index(
+                time_labels, target_dt.hour, target_dt.minute
+            )
             tick_vals.append(closest_idx)
             tick_texts.append(target_time)
         except ValueError:
             continue
 
+    return tick_vals, tick_texts
+
+
+def create_agp_plotly_graph(
+    agp_data: dict,
+    cgm_data: list = None,
+    end_timestamp: str = "00:00",
+    extend_hours: int = 0,
+) -> str:
+    """Generate a Plotly AGP chart and return JSON for embedding.
+
+    Args:
+        agp_data: Dictionary containing AGP percentile data (always 0:00-24:00)
+        cgm_data: Optional list of dicts with 'hour' and 'value' for CGM readings
+        end_timestamp: End time for the AGP window (e.g., "18:00"). Default "00:00".
+        extend_hours: Number of hours to extend the graph past end_timestamp.
+
+    Returns:
+        JSON string containing the Plotly figure data, layout, and config.
+    """
+    # Extract and prepare data
+    time_labels = agp_data.get("time", [])
+    p10 = agp_data.get("p10", [])
+    p25 = agp_data.get("p25", [])
+    p50 = agp_data.get("p50", [])
+    p75 = agp_data.get("p75", [])
+    p90 = agp_data.get("p90", [])
+
+    # Rotate data to start/end at specified timestamp
+    time_labels, p10, p25, p50, p75, p90, rotation_hours = _rotate_agp_data(
+        time_labels, p10, p25, p50, p75, p90, end_timestamp
+    )
+
+    # Extend data for additional hours if requested
+    time_labels, p10, p25, p50, p75, p90 = _extend_agp_data(
+        time_labels, p10, p25, p50, p75, p90, extend_hours
+    )
+
+    # Create figure
+    fig = go.Figure()
+    x_values = list(range(len(time_labels)))
+    target_range = (70, 180)
+
+    # Add target range background
+    fig.add_shape(
+        type="rect",
+        xref="paper",
+        yref="y",
+        x0=0,
+        x1=1,
+        y0=target_range[0],
+        y1=target_range[1],
+        fillcolor=COLORS["theme"]["background_tertiary"],
+        line=dict(width=0),
+        layer="below",
+    )
+
+    # Add percentile bands
+    _add_percentile_bands(fig, x_values, p10, p25, p50, p75, p90, target_range)
+
+    # Add CGM scatter points
+    _add_cgm_scatter(fig, cgm_data, rotation_hours, target_range)
+
+    # Calculate tick positions
+    tick_vals, tick_texts = _calculate_tick_positions(time_labels)
+
+    # Configure layout
     fig.update_layout(
         xaxis=dict(
             tickmode="array",
@@ -286,7 +312,6 @@ def create_agp_plotly_graph(
         dragmode=False,
     )
 
-    # Configure to remove all interactive elements
     config = {
         "displayModeBar": False,
         "staticPlot": False,
