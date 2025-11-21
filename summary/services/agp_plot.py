@@ -26,6 +26,9 @@ def create_agp_plotly_graph(
     p75 = agp_data.get("p75", [])
     p90 = agp_data.get("p90", [])
 
+    # Calculate rotation offset in hours for later use with CGM data
+    rotation_hours = 0
+
     # Rearrange data based on end_timestamp
     if end_timestamp != "00:00":
         # Parse the end_timestamp to get hours and minutes
@@ -33,6 +36,7 @@ def create_agp_plotly_graph(
             end_time = datetime.strptime(end_timestamp, "%H:%M")
             end_hour = end_time.hour
             end_minute = end_time.minute
+            rotation_hours = end_hour + end_minute / 60.0
         except ValueError:
             # If parsing fails, default to midnight
             end_hour = 0
@@ -54,7 +58,8 @@ def create_agp_plotly_graph(
                 continue
 
         if end_index > 0:
-            # Simple rotation
+            # Simple rotation - data is periodic, so no need for complex stitching
+            # Just rotate the arrays
             time_labels = time_labels[end_index:] + time_labels[:end_index]
             p10 = p10[end_index:] + p10[:end_index]
             p25 = p25[end_index:] + p25[:end_index]
@@ -167,7 +172,17 @@ def create_agp_plotly_graph(
     if cgm_data:
         # Convert hours to x-axis indices (assuming 12 points per hour)
         points_per_hour = 12
-        day_x = [reading["hour"] * points_per_hour for reading in cgm_data]
+
+        # Adjust CGM hours to account for rotation
+        # The AGP now shows data from (rotation_hours - 24) to rotation_hours
+        # So we need to shift CGM hours accordingly
+        day_x = []
+        for reading in cgm_data:
+            original_hour = reading["hour"]
+            # Shift the hour by the rotation amount
+            adjusted_hour = (original_hour - rotation_hours) % 24
+            day_x.append(adjusted_hour * points_per_hour)
+
         day_y = [reading["value"] for reading in cgm_data]
 
         # Assign colors based on target range

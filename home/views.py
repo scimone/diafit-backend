@@ -31,9 +31,10 @@ def home(request):
     today_start_tz = tz.localize(datetime.combine(now_tz.date(), time.min))
     today_start_utc = today_start_tz.astimezone(UTC)
     now_utc = now_tz.astimezone(UTC)
+    start = now_utc - timezone.timedelta(hours=24)
     today_cgm_data = (
         CgmEntity.objects.filter(
-            user=user, timestamp__gte=today_start_utc, timestamp__lte=now_utc
+            user=user, timestamp__gte=start, timestamp__lte=now_utc
         )
         .order_by("timestamp")
         .values_list("timestamp", "value_mgdl")
@@ -53,7 +54,7 @@ def home(request):
     if summary and summary.agp:
         try:
             plotly_graph = create_agp_plotly_graph(
-                summary.agp, today_cgm, end_timestamp="24:00"
+                summary.agp, today_cgm, end_timestamp=now_tz.strftime("%H:%M")
             )
             plotly_graph = json.loads(plotly_graph)  # Parse the JSON to modify it
 
