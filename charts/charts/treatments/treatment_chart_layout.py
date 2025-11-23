@@ -11,5 +11,9 @@ def get_treatment_chart_layout() -> go.Layout:
             showgrid=False,
             showticklabels=False,
         ),
+        yaxis4=dict(
+            showgrid=False,
+            showticklabels=False,
+        ),
     )
     return layout

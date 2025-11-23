@@ -2,12 +2,14 @@ from charts.charts.agp import (
     get_agp_chart_data,
 )
 from charts.charts.cgm import get_cgm_chart_data
+from charts.charts.sleep import get_sleep_chart_data
 from charts.charts.treatments import get_treatment_chart_data
 
 
 def get_home_chart_data(
     agp_data: dict,
     cgm_data: dict,
+    sleep_data: dict,
     bolus_data: dict,
     carb_data: dict,
     start_timestamp,
@@ -23,6 +25,10 @@ def get_home_chart_data(
 
     cgm_chart_data = get_cgm_chart_data(
         cgm_data=cgm_data, start_timestamp=start_timestamp
+    )
+
+    sleep_chart_data = get_sleep_chart_data(
+        sleep_data=sleep_data, start_timestamp=start_timestamp
     )
 
     bolus_chart_data = get_treatment_chart_data(
@@ -44,4 +50,5 @@ def get_home_chart_data(
         "cgm_chart_data": cgm_chart_data,
         "bolus_chart_data": bolus_chart_data,
         "carb_chart_data": carb_chart_data,
+        "sleep_chart_data": sleep_chart_data,
     }

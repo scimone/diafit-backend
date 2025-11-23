@@ -9,6 +9,7 @@ from charts.charts.home.home_chart import get_home_chart
 from diafit_backend.models.bolus_entity import BolusEntity
 from diafit_backend.models.cgm_entity import CgmEntity
 from diafit_backend.models.meal_entity import MealEntity
+from diafit_backend.models.sleep_entity import SleepSessionEntity
 from summary.services import get_agp_summary
 
 
@@ -43,6 +44,21 @@ def home_view(request):
     )
     cgm_data = [
         {"timestamp": ts.astimezone(user_tz), "value": val} for ts, val in cgm_data
+    ]
+
+    # Get sleep data
+    sleep_data = (
+        SleepSessionEntity.objects.filter(
+            user=user,
+            start_time__lte=end_timestamp,
+            end_time__gte=start_timestamp,
+        )
+        .order_by("start_time")
+        .values_list("start_time", "end_time")
+    )
+    sleep_data = [
+        {"start": ts.astimezone(user_tz), "end": val.astimezone(user_tz)}
+        for ts, val in sleep_data
     ]
 
     # Get bolus data
@@ -81,6 +97,7 @@ def home_view(request):
         ),
         agp_data=agp_data,
         cgm_data=cgm_data,
+        sleep_data=sleep_data,
         bolus_data=bolus_data,
         carb_data=carb_data,
     )

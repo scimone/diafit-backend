@@ -19,6 +19,7 @@ def get_home_chart(
     x_axis_range: tuple,
     agp_data,
     cgm_data,
+    sleep_data,
     bolus_data,
     carb_data,
 ):
@@ -26,6 +27,7 @@ def get_home_chart(
     home_chart_data = get_home_chart_data(
         agp_data,
         cgm_data,
+        sleep_data,
         bolus_data,
         carb_data,
         start_timestamp,
@@ -35,15 +37,16 @@ def get_home_chart(
     home_chart_traces = get_home_chart_traces(
         home_chart_data["agp_chart_data"],
         home_chart_data["cgm_chart_data"],
+        home_chart_data["sleep_chart_data"],
         home_chart_data["bolus_chart_data"],
         home_chart_data["carb_chart_data"],
     )
 
     fig = make_subplots(
-        rows=3,
+        rows=4,
         cols=1,
         shared_xaxes=True,
-        row_heights=[0.8, 0.1, 0.1],
+        row_heights=[0.8, 0.1, 0.1, 0.1],
         vertical_spacing=0,
     )
 
@@ -53,20 +56,23 @@ def get_home_chart(
     for trace in home_chart_traces["cgm_traces"]:
         fig.add_trace(trace, row=1, col=1)
 
-    for trace in home_chart_traces["bolus_traces"]:
+    for trace in home_chart_traces["sleep_traces"]:
         fig.add_trace(trace, row=2, col=1)
 
-    for trace in home_chart_traces["carb_traces"]:
+    for trace in home_chart_traces["bolus_traces"]:
         fig.add_trace(trace, row=3, col=1)
+
+    for trace in home_chart_traces["carb_traces"]:
+        fig.add_trace(trace, row=4, col=1)
 
     # Layout updates
     home_layout = get_home_chart_layout()
     treatment_layout = get_treatment_chart_layout()
     fig.update_layout(home_layout)
     fig.update_layout(treatment_layout)
-    fig.update_traces(xaxis="x3")
+    fig.update_traces(xaxis="x4")
     fig.update_layout(
-        xaxis3=get_home_chart_xaxis(
+        xaxis4=get_home_chart_xaxis(
             start_timestamp, end_timestamp + timedelta(hours=extend_hours)
         ),
     )

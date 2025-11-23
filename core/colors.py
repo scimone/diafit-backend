@@ -5,6 +5,7 @@ COLORS = {
         "under_range": "rgba(255, 105, 97, 1)",
         "carbs": "rgba(255, 193, 7, 1)",
         "bolus": "rgba(0, 123, 255, 1)",
+        "sleep": "rgba(255, 105, 180, 1)",
     },
     "agp": {
         "in_range_median": "rgba(67, 217, 152, 1)",
