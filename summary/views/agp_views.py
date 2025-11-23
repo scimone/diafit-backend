@@ -4,7 +4,8 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
 from django.shortcuts import render
 
-from summary.services import create_agp_plotly_graph, get_agp_summary
+from charts.charts.agp.agp_chart import get_agp_chart
+from summary.services import get_agp_summary
 
 
 @login_required
@@ -21,7 +22,7 @@ def agp_visualization(request):
 
     if summary and summary.agp:
         try:
-            plotly_graph = create_agp_plotly_graph(summary.agp)
+            plotly_graph = get_agp_chart(summary.agp)
             agp_patterns = summary.agp_trends
         except Exception as e:
             error_message = f"Error creating graph: {e}"

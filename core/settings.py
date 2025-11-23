@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "diafit_backend",
     "summary",
     "home",
+    "charts",
     "django_q",
     "interactions",
 ]

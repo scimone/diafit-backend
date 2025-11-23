@@ -3,6 +3,8 @@ COLORS = {
         "in_range": "rgba(140, 237, 194, 1)",
         "above_range": "rgba(168, 130, 255, 1)",
         "under_range": "rgba(255, 105, 97, 1)",
+        "carbs": "rgba(255, 193, 7, 1)",
+        "bolus": "rgba(0, 123, 255, 1)",
     },
     "agp": {
         "in_range_median": "rgba(67, 217, 152, 1)",
