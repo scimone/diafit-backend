@@ -25,6 +25,7 @@ def get_sleep_chart_traces(sleep_chart_data: dict):
             go.Scatter(
                 x=[x_start, x_end],
                 y=[y_level, y_level],
+                name="Sleep",
                 mode="lines+markers",
                 line=dict(
                     width=9,
@@ -36,7 +37,8 @@ def get_sleep_chart_traces(sleep_chart_data: dict):
                     symbol="circle",  # start marker
                     color=COLORS["diafit"]["sleep"],
                 ),
-                showlegend=False,
+                customdata=["start", "end"],
+                hovertemplate="%{customdata}",
             )
         )
 
