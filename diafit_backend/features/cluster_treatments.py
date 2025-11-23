@@ -17,9 +17,7 @@ def hierarchical_clustering_treatments(logs_today, log_type, max_d=1.5):
         list(zip(nnumbers, color, logs_today[log_type], logs_today.timestamp)),
         columns=["numbers", "segment", log_type, "timestamp"],
     ).groupby("segment")
-    agg_data = grouped_item.agg(
-        {log_type: ["sum", "list"], "timestamp": ["min", "max", "list"]}
-    )
+    agg_data = grouped_item.agg({log_type: [sum, list], "timestamp": [min, max, list]})
     agg_data = agg_data.reset_index()
     agg_data["timedelta"] = agg_data.timestamp["max"] - agg_data.timestamp["min"]
 
