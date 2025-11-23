@@ -15,7 +15,6 @@ from charts.charts.treatments.treatment_chart_layout import get_treatment_chart_
 
 
 def get_home_chart(
-    hours: int,
     extend_hours: int,
     x_axis_range: tuple,
     agp_data,

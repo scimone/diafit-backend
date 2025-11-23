@@ -21,6 +21,7 @@ def get_home_chart_xaxis(start_timestamp, end_timestamp):
         tickmode="array",
         tickvals=tick_vals,
         ticktext=tick_texts,
+        tickangle=0,
         range=[0, datetime_to_numeric(end_timestamp, start_timestamp)],
         showspikes=True,
         spikemode="across",

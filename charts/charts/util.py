@@ -42,7 +42,26 @@ def calculate_tick_positions(x_start_dt, x_end_dt, interval_hours=3):
     tick_labels = []
 
     total_hours = (x_end_dt - x_start_dt).total_seconds() / 3600
-    current = 0
+
+    # Find the next full hour after x_start_dt that is divisible by interval_hours
+    start_hour = x_start_dt.hour
+    if x_start_dt.minute > 0 or x_start_dt.second > 0 or x_start_dt.microsecond > 0:
+        start_hour += 1
+    next_divisible_hour = (
+        (start_hour + interval_hours - 1) // interval_hours
+    ) * interval_hours
+    current = next_divisible_hour - x_start_dt.hour
+    # If x_start_dt is not at midnight, add fractional part
+    current += -(
+        x_start_dt.minute / 60
+        + x_start_dt.second / 3600
+        + x_start_dt.microsecond / 3_600_000_000
+    )
+
+    # Ensure current is not negative
+    if current < 0:
+        current += interval_hours
+
     while current <= total_hours:
         tick_dt = x_start_dt + timedelta(hours=current)
         tick_vals.append(current)
@@ -50,7 +69,7 @@ def calculate_tick_positions(x_start_dt, x_end_dt, interval_hours=3):
         current += interval_hours
 
     # Ensure last tick at x_end_dt if not already present
-    if tick_vals[-1] < total_hours:
+    if tick_vals and tick_vals[-1] < total_hours:
         tick_vals.append(total_hours)
         tick_labels.append(x_end_dt.strftime("%H:%M"))
 

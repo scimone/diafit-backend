@@ -74,7 +74,6 @@ def home_view(request):
     ]
 
     fig_home = get_home_chart(
-        hours=hours,
         extend_hours=extend_hours,
         x_axis_range=(
             start_timestamp.astimezone(user_tz),
