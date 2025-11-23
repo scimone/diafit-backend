@@ -11,7 +11,8 @@ from charts.charts.home.home_chart_layout import (
     get_home_chart_xaxis,
 )
 from charts.charts.home.home_chart_traces import get_home_chart_traces
-from charts.charts.treatments.treatment_chart_layout import get_treatment_chart_layout
+from charts.charts.sleep import get_sleep_chart_layout
+from charts.charts.treatments import get_treatment_chart_layout
 
 
 def get_home_chart(
@@ -68,8 +69,10 @@ def get_home_chart(
     # Layout updates
     home_layout = get_home_chart_layout()
     treatment_layout = get_treatment_chart_layout()
+    sleep_layout = get_sleep_chart_layout()
     fig.update_layout(home_layout)
     fig.update_layout(treatment_layout)
+    fig.update_layout(sleep_layout)
     fig.update_traces(xaxis="x4")
     fig.update_layout(
         xaxis4=get_home_chart_xaxis(
