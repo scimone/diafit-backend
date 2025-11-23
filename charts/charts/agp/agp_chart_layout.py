@@ -41,6 +41,9 @@ def get_agp_chart_layout(
         showgrid=False,
         tickfont=dict(color="#8b949e"),
         zeroline=True,
+        side="left",
+        anchor="free",
+        position=1,
     )
 
     return go.Layout(layout)
