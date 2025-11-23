@@ -1,11 +1,15 @@
 import json
+from datetime import timedelta
 
 from plotly.subplots import make_subplots
 from plotly.utils import PlotlyJSONEncoder
 
 from charts.charts import get_base_config
 from charts.charts.home.home_chart_data import get_home_chart_data
-from charts.charts.home.home_chart_layout import get_home_chart_layout
+from charts.charts.home.home_chart_layout import (
+    get_home_chart_layout,
+    get_home_chart_xaxis,
+)
 from charts.charts.home.home_chart_traces import get_home_chart_traces
 from charts.charts.treatments.treatment_chart_layout import get_treatment_chart_layout
 
@@ -56,13 +60,17 @@ def get_home_chart(
     for trace in home_chart_traces["carb_traces"]:
         fig.add_trace(trace, row=3, col=1)
 
-    x_axis_range = [0, hours + extend_hours]
-    home_layout = get_home_chart_layout(range=x_axis_range)
-    fig.update_layout(home_layout)
+    # Layout updates
+    home_layout = get_home_chart_layout()
     treatment_layout = get_treatment_chart_layout()
+    fig.update_layout(home_layout)
     fig.update_layout(treatment_layout)
-    fig.update_xaxes(matches="x1", range=x_axis_range, showspikes=True)
-    fig.update_traces(xaxis="x1")
+    fig.update_traces(xaxis="x3")
+    fig.update_layout(
+        xaxis3=get_home_chart_xaxis(
+            start_timestamp, end_timestamp + timedelta(hours=extend_hours)
+        ),
+    )
 
     config = get_base_config()
 
