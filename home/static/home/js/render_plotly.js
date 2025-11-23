@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const chartContainer = document.getElementById('agpChart');
+    const chartContainer = document.getElementById('homeChart');
     const plotlyDataEl = document.getElementById('plotly-data');
 
     if (plotlyDataEl && chartContainer) {

@@ -10,7 +10,7 @@ def get_home_chart_layout(range) -> go.Layout:
 
     layout = get_agp_chart_layout()
     layout.update(
-        hovermode="x",
+        hovermode="closest",
         spikedistance=-1,
     )
     layout.yaxis.update(zeroline=False)
