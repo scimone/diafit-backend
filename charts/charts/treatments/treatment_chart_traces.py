@@ -36,7 +36,7 @@ def get_treatment_chart_traces(treatment_chart_data: dict):
         min_time = logs.timestamp.iloc[0] - timedelta(minutes=30)
         max_time = logs.timestamp.iloc[0] + timedelta(minutes=30)
         x_coords, y_coords = generate_rounded_rect_coords(
-            min_time, max_time, y_min=0, y_max=1, radius=0.15
+            min_time, max_time, y_min=0.15, y_max=0.85, radius=0.3
         )
         traces.append(
             go.Scatter(

@@ -115,7 +115,7 @@ def get_treatment_chart_data(treatment_data, log_type, start_timestamp, max_valu
         x_min = agg_data[("min_time", "")].iloc[idx]
         x_max = agg_data[("max_time", "")].iloc[idx]
         x_coords, y_coords = generate_rounded_rect_coords(
-            x_min, x_max, y_min=-0.5, y_max=0.5, radius=0.3
+            x_min, x_max, y_min=-0.35, y_max=0.35, radius=0.3
         )
         rounded_coords.append({"x": x_coords, "y": y_coords})
 
