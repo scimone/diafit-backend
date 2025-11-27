@@ -1,9 +1,58 @@
+import numpy as np
 import pandas as pd
 
 from charts.charts import datetime_to_numeric
 from diafit_backend.features.cluster_treatments import (
     hierarchical_clustering_treatments,
 )
+
+
+def generate_rounded_rect_coords(
+    x_min, x_max, y_min, y_max, radius=0.15, num_points=10
+):
+    """
+    Generate x, y coordinates for a rounded rectangle.
+
+    Parameters:
+        x_min, x_max: horizontal bounds
+        y_min, y_max: vertical bounds
+        radius: corner radius (in y-axis units)
+        num_points: number of points per corner arc
+
+    Returns:
+        x_coords, y_coords: lists of coordinates forming a closed rounded rectangle
+    """
+    x_coords = []
+    y_coords = []
+
+    # Clamp radius to not exceed half the height
+    actual_radius = min(radius, (y_max - y_min) / 2)
+
+    # Bottom-left corner (counterclockwise from bottom-right of arc)
+    theta = np.linspace(np.pi, 3 * np.pi / 2, num_points)
+    x_coords.extend((x_min + actual_radius) + actual_radius * np.cos(theta))
+    y_coords.extend((y_min + actual_radius) + actual_radius * np.sin(theta))
+
+    # Bottom-right corner
+    theta = np.linspace(3 * np.pi / 2, 2 * np.pi, num_points)
+    x_coords.extend((x_max - actual_radius) + actual_radius * np.cos(theta))
+    y_coords.extend((y_min + actual_radius) + actual_radius * np.sin(theta))
+
+    # Top-right corner
+    theta = np.linspace(0, np.pi / 2, num_points)
+    x_coords.extend((x_max - actual_radius) + actual_radius * np.cos(theta))
+    y_coords.extend((y_max - actual_radius) + actual_radius * np.sin(theta))
+
+    # Top-left corner
+    theta = np.linspace(np.pi / 2, np.pi, num_points)
+    x_coords.extend((x_min + actual_radius) + actual_radius * np.cos(theta))
+    y_coords.extend((y_max - actual_radius) + actual_radius * np.sin(theta))
+
+    # Close the shape
+    x_coords.append(x_coords[0])
+    y_coords.append(y_coords[0])
+
+    return x_coords, y_coords
 
 
 def get_hover_data(logs, agg_data, log_type, unit):
@@ -60,6 +109,16 @@ def get_treatment_chart_data(treatment_data, log_type, start_timestamp, max_valu
     )
     hover_data = get_hover_data(logs, agg_data, log_type, unit=unit)
 
+    # Calculate rounded rectangle coordinates for each treatment cluster
+    rounded_coords = []
+    for idx in range(len(agg_data)):
+        x_min = agg_data[("min_time", "")].iloc[idx]
+        x_max = agg_data[("max_time", "")].iloc[idx]
+        x_coords, y_coords = generate_rounded_rect_coords(
+            x_min, x_max, y_min=-0.5, y_max=0.5, radius=0.3
+        )
+        rounded_coords.append({"x": x_coords, "y": y_coords})
+
     return {
         "logs": logs,
         "log_type": log_type,
@@ -67,4 +126,5 @@ def get_treatment_chart_data(treatment_data, log_type, start_timestamp, max_valu
         "hover_data": hover_data,
         "agg_data": agg_data,
         "max_value": max_value,
+        "rounded_coords": rounded_coords,
     }
